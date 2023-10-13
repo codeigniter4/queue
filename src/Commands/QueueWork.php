@@ -58,6 +58,7 @@ class QueueWork extends BaseCommand
         '-rest'             => 'Rest time between the jobs in the queue. Default value: 0 (seconds)',
         '-max-jobs'         => 'The maximum number of jobs to handle before worker should exit. Disabled by default.',
         '-max-time'         => 'The maximum number of seconds worker should run. Disabled by default.',
+        '-memory'           => 'The maximum memory in MB that worker can take. Default value: 128',
         '--stop-when-empty' => 'Stop when the queue is empty.',
     ];
 
@@ -85,6 +86,7 @@ class QueueWork extends BaseCommand
         $rest      = $params['rest'] ?? CLI::getOption('rest') ?? 0;
         $maxJobs   = $params['max-jobs'] ?? CLI::getOption('max-jobs') ?? 0;
         $maxTime   = $params['max-time'] ?? CLI::getOption('max-time') ?? 0;
+        $memory    = $params['memory'] ?? CLI::getOption('memory') ?? 128;
         $countJobs = 0;
 
         if (array_key_exists('stop-when-empty', $params) || CLI::getOption('stop-when-empty')) {
@@ -112,6 +114,10 @@ class QueueWork extends BaseCommand
 
                 sleep((int) $sleep);
 
+                if ($this->checkMemory($memory)) {
+                    return EXIT_SUCCESS;
+                }
+
                 if ($this->checkStop($queue, $startTime)) {
                     return EXIT_SUCCESS;
                 }
@@ -129,6 +135,10 @@ class QueueWork extends BaseCommand
                 CLI::print($work->id, 'light_cyan');
 
                 $this->handleWork($work, $config);
+
+                if ($this->checkMemory($memory)) {
+                    return EXIT_SUCCESS;
+                }
 
                 if ($this->checkStop($queue, $startTime)) {
                     return EXIT_SUCCESS;
@@ -193,6 +203,17 @@ class QueueWork extends BaseCommand
     {
         if ($maxTime > 0 && microtime(true) - $startTime >= $maxTime) {
             CLI::write(sprintf('The maximum time (%s sec) for worker to run has been reached. Stopping.', $maxTime), 'yellow');
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function checkMemory(int $memory): bool
+    {
+        if (memory_get_peak_usage() > $memory * 1024 * 1024) {
+            CLI::write(sprintf('The memory limit of %s MB was reached. Stopping.', $memory), 'yellow');
 
             return true;
         }
