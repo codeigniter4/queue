@@ -59,6 +59,8 @@ class QueueWork extends BaseCommand
         '-max-jobs'         => 'The maximum number of jobs to handle before worker should exit. Disabled by default.',
         '-max-time'         => 'The maximum number of seconds worker should run. Disabled by default.',
         '-memory'           => 'The maximum memory in MB that worker can take. Default value: 128',
+        '-tries'            => 'The number of attempts after which the job will be considered as failed. Overrides settings from the Job class. Disabled by default.',
+        '-retry'            => 'The number of seconds after which the job is to be restarted in case of failure. Overrides settings from the Job class. Disabled by default.',
         '--stop-when-empty' => 'Stop when the queue is empty.',
     ];
 
@@ -87,6 +89,8 @@ class QueueWork extends BaseCommand
         $maxJobs   = $params['max-jobs'] ?? CLI::getOption('max-jobs') ?? 0;
         $maxTime   = $params['max-time'] ?? CLI::getOption('max-time') ?? 0;
         $memory    = $params['memory'] ?? CLI::getOption('memory') ?? 128;
+        $tries     = $params['tries'] ?? CLI::getOption('tries');
+        $retry     = $params['retry'] ?? CLI::getOption('retry');
         $countJobs = 0;
 
         if (array_key_exists('stop-when-empty', $params) || CLI::getOption('stop-when-empty')) {
@@ -134,7 +138,7 @@ class QueueWork extends BaseCommand
                 CLI::print(', with ID: ', 'cyan');
                 CLI::print($work->id, 'light_cyan');
 
-                $this->handleWork($work, $config);
+                $this->handleWork($work, $config, $tries, $retry);
 
                 if ($this->checkMemory($memory)) {
                     return EXIT_SUCCESS;
@@ -159,7 +163,7 @@ class QueueWork extends BaseCommand
         }
     }
 
-    private function handleWork(QueueJob $work, QueueConfig $config): void
+    private function handleWork(QueueJob $work, QueueConfig $config, ?int $tries, ?int $retry): void
     {
         timer()->start('work');
         $payload = $work->payload;
@@ -174,9 +178,9 @@ class QueueWork extends BaseCommand
 
             CLI::write('The processing of this job was successful', 'green');
         } catch (Throwable $err) {
-            if (isset($job) && ++$work->attempts < $job->getRetries()) {
+            if (isset($job) && ++$work->attempts < $tries ?? $job->getRetries()) {
                 // Schedule for later
-                service('queue')->later($work, $job->getRetryAfter());
+                service('queue')->later($work, $retry ?? $job->getRetryAfter());
             } else {
                 // Mark as failed
                 service('queue')->failed($work, $err, $config->keepFailedJobs);
