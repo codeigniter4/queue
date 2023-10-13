@@ -1,9 +1,9 @@
 <?php
 
 return [
-    'generator'     => [
+    'generator' => [
         'className' => [
-            'job'   => 'Job class name',
+            'job' => 'Job class name',
         ],
     ],
     'incorrectHandler'    => 'This queue handler is incorrect.',

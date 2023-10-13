@@ -37,19 +37,19 @@ class QueuePublish extends BaseCommand
             $contents = str_replace('namespace Michalsn\\CodeIgniterQueue\\Config', 'namespace Config', $contents);
             $contents = str_replace('use CodeIgniter\\Config\\BaseConfig', 'use Michalsn\\CodeIgniterQueue\\Config\\Queue as BaseQueue', $contents);
             $contents = str_replace('class Queue extends BaseConfig', 'class Queue extends BaseQueue', $contents);
-            $method = <<<EOT
-    /**
-     * Resolve job class name.
-     */
-    public function resolveJobClass(string \$name): string
-    {
-        if (! isset(\$this->jobHandlers[\$name])) {
-            throw new InvalidArgumentException('This job name is not defined in the \$jobHandlers array.');
-        }
+            $method   = <<<'EOT'
+                    /**
+                     * Resolve job class name.
+                     */
+                    public function resolveJobClass(string \$name): string
+                    {
+                        if (! isset(\$this->jobHandlers[\$name])) {
+                            throw QueueException::forIncorrectJobHandler();
+                        }
 
-        return \$this->jobHandlers[\$name];
-    }
-EOT;
+                        return \$this->jobHandlers[\$name];
+                    }
+                EOT;
             $contents = str_replace($method, '', $contents);
             file_put_contents($file, $contents);
         }

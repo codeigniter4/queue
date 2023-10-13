@@ -53,7 +53,7 @@ class QueueFailed extends BaseCommand
         // Read params
         $queue = $params['queue'] ?? CLI::getOption('queue');
 
-        /* @var QueueConfig $config */
+        /** @var QueueConfig $config */
         $config = config('queue');
 
         $results = service('queue')->listFailed($queue);

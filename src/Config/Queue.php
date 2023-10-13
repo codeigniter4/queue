@@ -2,10 +2,9 @@
 
 namespace Michalsn\CodeIgniterQueue\Config;
 
-use InvalidArgumentException;
+use CodeIgniter\Config\BaseConfig;
 use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
 use Michalsn\CodeIgniterQueue\Handlers\DatabaseHandler;
-use CodeIgniter\Config\BaseConfig;
 
 class Queue extends BaseConfig
 {

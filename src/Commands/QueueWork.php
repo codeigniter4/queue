@@ -68,7 +68,7 @@ class QueueWork extends BaseCommand
      */
     public function run(array $params)
     {
-        /* @var QueueConfig $config */
+        /** @var QueueConfig $config */
         $config        = config('Queue');
         $stopWhenEmpty = false;
         $waiting       = false;
@@ -163,7 +163,6 @@ class QueueWork extends BaseCommand
             service('queue')->done($work, $config->keepDoneJobs);
 
             CLI::write('The processing of this job was successful', 'green');
-
         } catch (Throwable $err) {
             if (isset($job) && ++$work->attempts < $job->getRetries()) {
                 // Schedule for later

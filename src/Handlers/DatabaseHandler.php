@@ -3,22 +3,21 @@
 namespace Michalsn\CodeIgniterQueue\Handlers;
 
 use CodeIgniter\I18n\Time;
+use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
 use Michalsn\CodeIgniterQueue\Entities\QueueJob;
 use Michalsn\CodeIgniterQueue\Entities\QueueJobFailed;
 use Michalsn\CodeIgniterQueue\Enums\Status;
 use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
-use Michalsn\CodeIgniterQueue\Models\QueueJobFailedModel;
-use Michalsn\CodeIgniterQueue\Payload;
 use Michalsn\CodeIgniterQueue\Interfaces\QueueInterface;
+use Michalsn\CodeIgniterQueue\Models\QueueJobFailedModel;
 use Michalsn\CodeIgniterQueue\Models\QueueJobModel;
-use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
-use InvalidArgumentException;
+use Michalsn\CodeIgniterQueue\Payload;
 use ReflectionException;
 use Throwable;
 
 class DatabaseHandler implements QueueInterface
 {
-    private QueueJobModel $jobModel;
+    private readonly QueueJobModel $jobModel;
 
     public function __construct(protected QueueConfig $config)
     {
@@ -146,10 +145,10 @@ class DatabaseHandler implements QueueInterface
     /**
      * Delete failed job by ID.
      */
-    public function forget(int $id, $affectedRows = false): bool
+    public function forget(int $id, bool $affectedRows = false): bool
     {
-        return model(QueueJobFailedModel::class)->delete($id) &&
-            (! $affectedRows || model(QueueJobFailedModel::class)->affectedRows() > 0);
+        return model(QueueJobFailedModel::class)->delete($id)
+            && (! $affectedRows || model(QueueJobFailedModel::class)->affectedRows() > 0);
     }
 
     /**

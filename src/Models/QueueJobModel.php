@@ -3,8 +3,8 @@
 namespace Michalsn\CodeIgniterQueue\Models;
 
 use CodeIgniter\I18n\Time;
-use Michalsn\CodeIgniterQueue\Entities\QueueJob;
 use CodeIgniter\Model;
+use Michalsn\CodeIgniterQueue\Entities\QueueJob;
 use Michalsn\CodeIgniterQueue\Enums\Status;
 use ReflectionException;
 
@@ -77,6 +77,7 @@ class QueueJobModel extends Model
 
         if ($this->db->DBDriver === 'SQLSRV') {
             $replace = 'WITH (ROWLOCK,UPDLOCK,READPAST) WHERE';
+
             return str_replace('WHERE', $replace, $sql);
         }
 
