@@ -63,8 +63,8 @@ class QueueJobModel extends Model
         /** @var QueueJob|null $row */
         $row = $query->getCustomRowObject(0, QueueJob::class);
 
-        // Remove row
         if ($row !== null) {
+            // Change status
             $this->update($row->id, ['status' => Status::RESERVED->value]);
         }
         // Complete transaction
