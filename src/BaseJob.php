@@ -8,7 +8,7 @@ abstract class BaseJob
     protected int $retryAfter = 60;
 
     // Number of tries
-    protected int $retries = 1;
+    protected int $tries = 1;
 
     public function __construct(protected array $data)
     {
@@ -19,8 +19,8 @@ abstract class BaseJob
         return $this->retryAfter;
     }
 
-    public function getRetries(): int
+    public function getTries(): int
     {
-        return $this->retries;
+        return $this->tries;
     }
 }
