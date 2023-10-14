@@ -23,7 +23,6 @@ class DatabaseHandler implements QueueInterface
     {
         $connection     = db_connect($config->database['dbGroup'], $config->database['getShared']);
         $this->jobModel = model(QueueJobModel::class, true, $connection);
-        $this->jobModel->setTable($config->database['table']);
     }
 
     /**
@@ -55,7 +54,17 @@ class DatabaseHandler implements QueueInterface
      */
     public function pop(string $queue): ?QueueJob
     {
-        return $this->jobModel->getFromQueue($queue);
+        $queueJob = $this->jobModel->getFromQueue($queue);
+
+        if ($queueJob === null) {
+            return null;
+        }
+
+        // Set the actual status as in DB.
+        $queueJob->status = Status::RESERVED->value;
+        $queueJob->syncOriginal();
+
+        return $queueJob;
     }
 
     /**
@@ -96,11 +105,13 @@ class DatabaseHandler implements QueueInterface
 
     /**
      * Change job status to DONE od delete it.
+     *
+     * @throws ReflectionException
      */
     public function done(QueueJob $queueJob, bool $keepJob): bool
     {
         if ($keepJob) {
-            return $this->jobModel->update($queueJob->id, ['status' => Status::DONE]);
+            return $this->jobModel->update($queueJob->id, ['status' => Status::DONE->value]);
         }
 
         return $this->jobModel->delete($queueJob->id);
@@ -120,6 +131,9 @@ class DatabaseHandler implements QueueInterface
 
     /**
      * Retry failed job.
+     * ∂
+     *
+     * @throws ReflectionException
      */
     public function retry(?int $id, ?string $queue): int
     {
@@ -145,10 +159,13 @@ class DatabaseHandler implements QueueInterface
     /**
      * Delete failed job by ID.
      */
-    public function forget(int $id, bool $affectedRows = false): bool
+    public function forget(int $id): bool
     {
-        return model(QueueJobFailedModel::class)->delete($id)
-            && (! $affectedRows || model(QueueJobFailedModel::class)->affectedRows() > 0);
+        if (model(QueueJobFailedModel::class)->delete($id)) {
+            return model(QueueJobFailedModel::class)->affectedRows() > 0;
+        }
+
+        return false;
     }
 
     /**
@@ -156,6 +173,10 @@ class DatabaseHandler implements QueueInterface
      */
     public function flush(?int $hours, ?string $queue): bool
     {
+        if ($hours === null && $queue === null) {
+            return model(QueueJobFailedModel::class)->truncate();
+        }
+
         return model(QueueJobFailedModel::class)
             ->when(
                 $hours !== null,

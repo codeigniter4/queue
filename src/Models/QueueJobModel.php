@@ -10,7 +10,7 @@ use ReflectionException;
 
 class QueueJobModel extends Model
 {
-    protected $table            = '';
+    protected $table            = 'queue_jobs';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = QueueJob::class;
@@ -37,8 +37,12 @@ class QueueJobModel extends Model
      */
     public function getFromQueue(string $name): ?QueueJob
     {
-        // Make sure we still have the connection
-        $this->db->reconnect();
+        // For SQLite3 memory database this will cause problems
+        // so check if we're not in the testing environment first.
+        if (ENVIRONMENT !== 'testing' && $this->db->database !== ':memory:') {
+            // Make sure we still have the connection
+            $this->db->reconnect();
+        }
         // Start transaction
         $this->db->transStart();
 
@@ -53,6 +57,9 @@ class QueueJobModel extends Model
             ->getCompiledSelect();
 
         $query = $this->db->query($this->skipLocked($sql));
+        if ($query === false) {
+            return null;
+        }
         /** @var QueueJob $row */
         $row = $query->getCustomRowObject(0, QueueJob::class);
 

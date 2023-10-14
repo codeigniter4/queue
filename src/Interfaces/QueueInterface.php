@@ -19,9 +19,9 @@ interface QueueInterface
 
     public function clear(?string $queue = null);
 
-   public function retry(?int $id, ?string $queue);
+    public function retry(?int $id, ?string $queue);
 
-    public function forget(int $id, bool $affectedRows = false);
+    public function forget(int $id);
 
     public function flush(?int $hours, ?string $queue);
 

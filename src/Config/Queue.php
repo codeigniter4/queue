@@ -26,7 +26,6 @@ class Queue extends BaseConfig
     public array $database = [
         'dbGroup'   => 'default',
         'getShared' => true,
-        'table'     => 'queue_jobs',
     ];
 
     /**
