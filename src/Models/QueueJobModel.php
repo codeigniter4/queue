@@ -60,7 +60,7 @@ class QueueJobModel extends Model
         if ($query === false) {
             return null;
         }
-        /** @var QueueJob $row */
+        /** @var QueueJob|null $row */
         $row = $query->getCustomRowObject(0, QueueJob::class);
 
         // Remove row
