@@ -15,7 +15,7 @@ use Tests\Support\TestCase;
 final class QueueTest extends TestCase
 {
     protected $seed = TestQueueSeeder::class;
-    protected QueueConfig $config;
+    private QueueConfig $config;
 
     protected function setUp(): void
     {

@@ -18,7 +18,7 @@ class TestQueueSeeder extends Seeder
             'payload'      => ['job' => 'success', 'data' => []],
             'status'       => Status::RESERVED->value,
             'attempts'     => 0,
-            'available_at' => 1697269864,
+            'available_at' => 1_697_269_864,
         ]));
 
         model(QueueJobModel::class)->insert(new QueueJob([
@@ -26,7 +26,7 @@ class TestQueueSeeder extends Seeder
             'payload'      => ['job' => 'failure', 'data' => []],
             'status'       => Status::PENDING->value,
             'attempts'     => 0,
-            'available_at' => 1697269860,
+            'available_at' => 1_697_269_860,
         ]));
 
         model(QueueJobFailedModel::class)->insert(new QueueJobFailed([

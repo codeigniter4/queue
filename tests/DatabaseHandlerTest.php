@@ -19,7 +19,7 @@ use Tests\Support\TestCase;
 final class DatabaseHandlerTest extends TestCase
 {
     protected $seed = TestQueueSeeder::class;
-    protected QueueConfig $config;
+    private QueueConfig $config;
 
     protected function setUp(): void
     {
@@ -72,7 +72,7 @@ final class DatabaseHandlerTest extends TestCase
         $this->assertInstanceOf(QueueJob::class, $result);
         $this->seeInDatabase('queue_jobs', [
             'status'       => Status::RESERVED->value,
-            'available_at' => 1697269860,
+            'available_at' => 1_697_269_860,
         ]);
     }
 
@@ -241,7 +241,7 @@ final class DatabaseHandlerTest extends TestCase
         $this->assertTrue($result);
 
         // Set first record as older than 1 hour
-        model(QueueJobFailedModel::class)->builder()->where('id', 1)->update(['failed_at' => 1697269860]);
+        model(QueueJobFailedModel::class)->builder()->where('id', 1)->update(['failed_at' => 1_697_269_860]);
 
         $handler->flush(1, 'queue1');
         $this->dontSeeInDatabase('queue_jobs_failed', [
