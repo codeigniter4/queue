@@ -22,9 +22,29 @@ parameters:
 	            - src/Handlers/DatabaseHandler.php
 	            - src/Models/QueueJobModel.php
 	    -
-	        message: '#Call to an undefined method Michalsn\\CodeIgniterQueue\\Models\\QueueJobFailedModel\::affectedRows\(\).#'
+	        message: '#Call to an undefined method Michalsn\\CodeIgniterQueue\\Models\\QueueJobFailedModel::affectedRows\(\).#'
 	        paths:
 	            - src/Handlers/DatabaseHandler.php
+	    -
+	        message: '#Call to an undefined method Michalsn\\CodeIgniterQueue\\Models\\QueueJobFailedModel::truncate\(\).#'
+	        paths:
+	            - src/Handlers/DatabaseHandler.php
+	    -
+	        message: '#Parameter \#3 \$tries of method Michalsn\\CodeIgniterQueue\\Commands\\QueueWork::handleWork\(\) expects int\|null, string\|true\|null given.#'
+	        paths:
+	            - src/Commands/QueueWork.php
+	    -
+	        message: '#Parameter \#4 \$retryAfter of method Michalsn\\CodeIgniterQueue\\Commands\\QueueWork::handleWork\(\) expects int\|null, string\|true\|null given.#'
+	        paths:
+	            - src/Commands/QueueWork.php
+	    -
+	        message: '#Expression on left side of \?\? is not nullable.#'
+	        paths:
+	            - src/Commands/QueueWork.php
+	    -
+	        message: '#Variable \$job might not be defined.#'
+	        paths:
+	            - src/Commands/QueueWork.php
 	universalObjectCratesClasses:
 		- CodeIgniter\Entity
 		- CodeIgniter\Entity\Entity
