@@ -2,9 +2,28 @@
 
 namespace Michalsn\CodeIgniterQueue\Interfaces;
 
+use Michalsn\CodeIgniterQueue\Entities\QueueJob;
+use Throwable;
+
 interface QueueInterface
 {
     public function push(string $queue, string $job, array $data);
 
     public function pop(string $queue);
+
+    public function later(QueueJob $queueJob, int $seconds);
+
+    public function failed(QueueJob $queueJob, Throwable $err, bool $keepJob);
+
+    public function done(QueueJob $queueJob, bool $keepJob);
+
+    public function clear(?string $queue = null);
+
+   public function retry(?int $id, ?string $queue);
+
+    public function forget(int $id, bool $affectedRows = false);
+
+    public function flush(?int $hours, ?string $queue);
+
+    public function listFailed(?string $queue);
 }
