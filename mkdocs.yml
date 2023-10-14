@@ -1,0 +1,57 @@
+site_name: CodeIgniter Queue
+site_description: Queues documentation for CodeIgniter 4 framework
+
+theme:
+  name: material
+  logo: assets/flame.svg
+  favicon: assets/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+extra:
+  homepage: https://michalsn.github.io/codeigniter-queue
+
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/michalsn/codeigniter-queue
+      name: GitHub
+
+repo_url: https://github.com/michalsn/codeigniter-queue
+edit_uri: edit/develop/docs/
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      use_pygments: false
+
+extra_css:
+  - assets/github-dark-dimmed.css
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.6.0/build/highlight.min.js
+  - assets/hljs.js
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Configuration: configuration.md
+  - Basic usage: basic_usage.md
+  - Running queues: running_queues.md
+  - Commands: commands.md
+  - Troubleshooting: troubleshooting.md

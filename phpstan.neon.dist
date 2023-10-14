@@ -1,0 +1,37 @@
+parameters:
+	tmpDir: build/phpstan
+	level: 5
+	paths:
+		- src/
+		- tests/
+	bootstrapFiles:
+		- vendor/codeigniter4/framework/system/Test/bootstrap.php
+	excludePaths:
+	ignoreErrors:
+	    -
+	        message: '#Cannot use \+\+ on array\|bool\|float\|int\|object\|string\|null.#'
+	        paths:
+	            - src/Commands/QueueWork.php
+	    -
+	        message: '#Variable \$config on left side of \?\?\= always exists and is not nullable.#'
+	        paths:
+	            - src/Config/Services.php
+	    -
+	        message: '#Access to an undefined property CodeIgniter\\I18n\\Time::\$timestamp.#'
+	        paths:
+	            - src/Handlers/DatabaseHandler.php
+	            - src/Models/QueueJobModel.php
+	    -
+	        message: '#Call to an undefined method Michalsn\\CodeIgniterQueue\\Models\\QueueJobFailedModel\::affectedRows\(\).#'
+	        paths:
+	            - src/Handlers/DatabaseHandler.php
+	universalObjectCratesClasses:
+		- CodeIgniter\Entity
+		- CodeIgniter\Entity\Entity
+		- Faker\Generator
+	scanDirectories:
+		- vendor/codeigniter4/framework/system/Helpers
+	dynamicConstantNames:
+		- APP_NAMESPACE
+		- CI_DEBUG
+		- ENVIRONMENT
