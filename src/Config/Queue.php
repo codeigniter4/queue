@@ -44,6 +44,15 @@ class Queue extends BaseConfig
      */
     public array $jobHandlers = [];
 
+    public function __construct()
+    {
+        parent::__construct();
+
+        if (ENVIRONMENT === 'testing') {
+            $this->database['dbGroup'] = config('database')->defaultGroup;
+        }
+    }
+
     /**
      * Resolve job class name.
      */
