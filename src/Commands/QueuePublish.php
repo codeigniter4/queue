@@ -38,16 +38,26 @@ class QueuePublish extends BaseCommand
             $contents = str_replace('use CodeIgniter\\Config\\BaseConfig', 'use Michalsn\\CodeIgniterQueue\\Config\\Queue as BaseQueue', $contents);
             $contents = str_replace('class Queue extends BaseConfig', 'class Queue extends BaseQueue', $contents);
             $method   = <<<'EOT'
+
+                    public function __construct()
+                    {
+                        parent::__construct();
+
+                        if (ENVIRONMENT === 'testing') {
+                            $this->database['dbGroup'] = config('database')->defaultGroup;
+                        }
+                    }
+
                     /**
                      * Resolve job class name.
                      */
-                    public function resolveJobClass(string \$name): string
+                    public function resolveJobClass(string $name): string
                     {
-                        if (! isset(\$this->jobHandlers[\$name])) {
+                        if (! isset($this->jobHandlers[$name])) {
                             throw QueueException::forIncorrectJobHandler();
                         }
 
-                        return \$this->jobHandlers[\$name];
+                        return $this->jobHandlers[$name];
                     }
                 EOT;
             $contents = str_replace($method, '', $contents);
