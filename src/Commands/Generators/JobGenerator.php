@@ -38,7 +38,7 @@ class JobGenerator extends BaseCommand
      *
      * @var string
      */
-    protected $usage = 'queue:make:job <name> [options]';
+    protected $usage = 'queue:job <name> [options]';
 
     /**
      * The Command's Arguments

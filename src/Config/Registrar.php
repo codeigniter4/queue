@@ -8,7 +8,7 @@ class Registrar
     {
         return [
             'views' => [
-                'queue:make:job' => 'Michalsn\CodeIgniterQueue\Commands\Generators\Views\job.tpl.php',
+                'queue:job' => 'Michalsn\CodeIgniterQueue\Commands\Generators\Views\job.tpl.php',
             ],
         ];
     }
