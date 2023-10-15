@@ -23,6 +23,10 @@
         <include>
             <directory suffix=".php">./src/</directory>
         </include>
+        <exclude>
+            <directory suffix=".php">./src/Commands</directory>
+            <directory suffix=".php">./src/Config</directory>
+        </exclude>
         <report>
             <clover outputFile="build/phpunit/clover.xml"/>
             <html outputDirectory="build/phpunit/html"/>
