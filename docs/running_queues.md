@@ -26,6 +26,8 @@ We could think about resigning with `-max-jobs` parameter, but it can have unpre
 
 So choosing the right command is not so obvious. We have to estimate how many jobs we will have in the queue and decide how crucial it is to empty the queue as soon as possible.
 
+You might use CodeIgniter [Tasks](https://github.com/codeigniter4/tasks) library to schedule queue worker instead of working directly with CRON.
+
 ### Running many instances of the same queue
 
 As mentioned above, sometimes we may want to have multiple instances of the same command running at the same time. The queue is safe to use in that scenario with all databases except `SQLite3` since it doesn't guarantee that the job will be selected only by one process.

@@ -59,7 +59,7 @@ Allows you to consume jobs from a specific queue.
 * `-rest` - Rest time between the jobs in the queue. Default value: `0` (seconds)
 * `-max-jobs` - The maximum number of jobs to handle before worker should exit. Disabled by default.
 * `-max-time` - The maximum number of seconds worker should run. Disabled by default.
-* `-memory` - The maximum memory in MB that worker can take. Default value: `128`,
+* `-memory` - The maximum memory in MB that worker can take. Default value: `128`.
 * `-tries` - The number of attempts after which the job will be considered as failed. Overrides settings from the Job class. Disabled by default.
 * `-retry-after` - The number of seconds after which the job is to be restarted in case of failure. Overrides settings from the Job class. Disabled by default.
 * `--stop-when-empty` - Stop when the queue is empty.

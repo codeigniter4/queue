@@ -2,15 +2,13 @@
 
 - [Composer Installation](#composer-installation)
 - [Manual Installation](#manual-installation)
-- [Database migration](#database-migration)
+- [Database Migration](#database-migration)
 
 ## Composer Installation
 
 The only thing you have to do is to run this command, and you're ready to go.
 
-```console
-composer require michalsn/codeigniter-queue
-```
+    composer require michalsn/codeigniter-queue
 
 ## Manual Installation
 
@@ -32,12 +30,10 @@ public $psr4 = [
 // ...
 ```
 
-## Database migration
+## Database Migration
 
 Regardless of which installation method you chose, we also need to migrate the database to add new tables.
 
 You can do this with the following command:
 
-```console
-php spark migrate --all
-```
+    php spark migrate --all

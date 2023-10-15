@@ -3,13 +3,14 @@
 A library that helps you handle Queues in the CodeIgniter 4 framework.
 
 Add job to the queue.
+
 ```php
-service('queue')->push('QueueName', 'jobName', ['array' => 'parameters']);
+service('queue')->push('queueName', 'jobName', ['array' => 'parameters']);
 ```
 
-Listen for queue jobs.
+Listen for queued jobs.
 
-    php spark queue:work QueueName
+    php spark queue:work queueName
 
 ### Requirements
 

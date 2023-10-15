@@ -73,18 +73,37 @@ class Email extends BaseJob implements JobInterface
 }
 ```
 
-The method that handles the job is the `process` method. It is the one that is called when our job is executed.
+To handles the job we always use the `process` method. This method is called when our job is executed.
 
 You may be wondering what the `$this->data['message']` variable is all about. We'll explain that in detail in the next section, but for now it's important for you to remember that all the variables we pass to the Job class are always held in the `$this->data` variable.
 
 Throwing an exception is a way to let the queue worker know that the job has failed.
+
+We can also configure some things on the job level. It's a number of tries, when the job is failing and time after the job will be retried again after failure. We can specify these options by using variables:
+
+```php
+// ...
+
+class Email extends BaseJob implements JobInterface
+{
+    protected int $retryAfter = 60;
+    protected int $tries      = 1;
+
+    // ...
+
+}
+```
+
+Values presented above, are the default one. So you need to add them only when you want to change them.
+
+These variables may be overwritten by the queue worker, if we use the proper parameters with command `queue:work`. For more information, see [commands](commands.md).
 
 ### Sending job to the queue
 
 Sending a task to the queue is very simple and comes down to one command:
 
 ```php
-service('queue')->push('QueueName', 'jobName', ['array' => 'parameters']);
+service('queue')->push('queueName', 'jobName', ['array' => 'parameters']);
 ```
 
 In our particular case, for the `Email` class, it might look like this:
