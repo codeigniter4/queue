@@ -6,9 +6,7 @@ Running a queue can be done in several ways. It all depends on what kind of envi
 
 Since Supervisor is taking care of everything for us and will make out queue worker up and running, we can use this command:
 
-```cli
-php spark queue:work emails -wait 10
-```
+    php spark queue:work emails -wait 10
 
 This will cause command to check for the new jobs every 10 seconds if the queue is empty. But it will not quit. Waiting time is important since we don't want to overflow out database with the unnecessary queries.
 
@@ -16,9 +14,7 @@ This will cause command to check for the new jobs every 10 seconds if the queue 
 
 Using queues with CRON is more challenging, but definitely doable. You can use command like this:
 
-```cli
-php spark queue:work emails -max-jobs 20 --stop-when-empty
-```
+    php spark queue:work emails -max-jobs 20 --stop-when-empty
 
 We can schedule CRON to execute our command every minute. This way, if there are no emails to handle, the command will quit immediately. And if there are many emails the batch of 20 will be handled every minute.
 
@@ -36,8 +32,6 @@ As mentioned above, sometimes we may want to have multiple instances of the same
 
 If we decide to run the long process e.g. with the command:
 
-```cli
-php spark queue:work emails -wait 10
-```
+    php spark queue:work emails -wait 10
 
 We must remember to restart our command every time we add a new job or change the code in the existing job files. The reason is that the changes will not be visible before we restart the command.

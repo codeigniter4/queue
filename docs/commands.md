@@ -21,7 +21,7 @@ Available options:
 
 Allows you to publish a configuration class in the application namespace.
 
-#### Example
+##### Example
 
     php spark queue:publish
 
@@ -29,17 +29,17 @@ Allows you to publish a configuration class in the application namespace.
 
 Generates a new job file.
 
-#### Arguments
+##### Arguments
 
 * `name` - The job class name.
 
-#### Options
+##### Options
 
 * `--namespace` - Set root namespace. Default: "APP_NAMESPACE".
 * `--suffix` - Append the component title to the class name (e.g. Email => EmailJob).
 * `--force` - Force overwrite existing file.
 
-#### Example
+##### Example
 
     php spark queue:job Email
 
@@ -49,11 +49,11 @@ It will generate the `Email` class in the `App\Jobs` namespace.
 
 Allows you to consume jobs from a specific queue.
 
-#### Arguments
+##### Arguments
 
 * `queueName` - Name of the queue we will work with.
 
-#### Options
+##### Options
 
 * `-sleep` - Wait time between the next check for available job when the queue is empty. Default value: `10` (seconds).
 * `-rest` - Rest time between the jobs in the queue. Default value: `0` (seconds)
@@ -64,7 +64,7 @@ Allows you to consume jobs from a specific queue.
 * `-retry-after` - The number of seconds after which the job is to be restarted in case of failure. Overrides settings from the Job class. Disabled by default.
 * `--stop-when-empty` - Stop when the queue is empty.
 
-#### Example
+##### Example
 
     php spark queue:work emails -max-jobs 5
 
@@ -74,11 +74,11 @@ It will listen for 5 jobs from the `emails` queue and then stop.
 
 Allows you to stop a specific queue in a safe way. It does this as soon as the job that is running in the queue is completed.
 
-#### Arguments
+##### Arguments
 
 * `queueName` - Name of the queue we will work with.
 
-#### Example
+##### Example
 
     php spark queue:stop emails
 
@@ -86,11 +86,11 @@ Allows you to stop a specific queue in a safe way. It does this as soon as the j
 
 Allows you to remove all jobs from a specific queue.
 
-#### Arguments
+##### Arguments
 
 * `queueName` - Name of the queue we will work with.
 
-#### Example
+##### Example
 
     php spark queue:clear emails
 
@@ -98,11 +98,11 @@ Allows you to remove all jobs from a specific queue.
 
 Allows you to view all failed jobs. Also only from a specific queue
 
-#### Options
+##### Options
 
 * `-queue` - Queue name.
 
-#### Example
+##### Example
 
     php spark queue:failed -queue emails
 
@@ -112,15 +112,15 @@ It will list failed jobs from the `emails` queue.
 
 Allows you to retry failed jobs back to the queue.
 
-#### Arguments
+##### Arguments
 
 * `id` - ID of the failed job or "all" for all failed jobs.
 
-#### Options
+##### Options
 
 * `-queue` -  Queue name.
 
-#### Example
+##### Example
 
     php spark queue:retry all -queue emails
 
@@ -130,11 +130,11 @@ It will retry all the failed jobs from the `emails` queue.
 
 Allows you to delete the failed job by ID
 
-#### Arguments
+##### Arguments
 
 * `id` - ID of the failed job.
 
-#### Example
+##### Example
 
     php spark queue:forget 123
 
@@ -142,12 +142,12 @@ Allows you to delete the failed job by ID
 
 Allows you to delete many failed jobs at once. Based on the failed date and queue.
 
-#### Options
+##### Options
 
 * `-hours` - Number of hours.
 * `-queue` - Queue name.
 
-#### Example
+##### Example
 
     php spark queue:flush -hours 6
 
