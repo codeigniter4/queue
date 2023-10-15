@@ -69,7 +69,7 @@ class JobGenerator extends BaseCommand
         $this->directory = 'Jobs';
         $this->template  = 'job.tpl.php';
 
-        $this->classNameLang = 'QueueJob.generator.className.job';
+        $this->classNameLang = 'Queue.generator.className.job';
 
         $this->generateClass($params);
 
