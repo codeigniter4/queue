@@ -59,6 +59,7 @@ class QueueWork extends BaseCommand
         '-max-jobs'         => 'The maximum number of jobs to handle before worker should exit. Disabled by default.',
         '-max-time'         => 'The maximum number of seconds worker should run. Disabled by default.',
         '-memory'           => 'The maximum memory in MB that worker can take. Default value: 128',
+        '-priority'         => 'The priority for the jobs from the queue (comma separated). If not provided explicit, will follow the priorities defined in the config via $queuePriorities for the given queue. Disabled by default.',
         '-tries'            => 'The number of attempts after which the job will be considered as failed. Overrides settings from the Job class. Disabled by default.',
         '-retry-after'      => 'The number of seconds after which the job is to be restarted in case of failure. Overrides settings from the Job class. Disabled by default.',
         '--stop-when-empty' => 'Stop when the queue is empty.',
@@ -71,6 +72,8 @@ class QueueWork extends BaseCommand
      */
     public function run(array $params)
     {
+        set_time_limit(0);
+
         /** @var QueueConfig $config */
         $config        = config('Queue');
         $stopWhenEmpty = false;
@@ -89,6 +92,7 @@ class QueueWork extends BaseCommand
         $maxJobs    = $params['max-jobs'] ?? CLI::getOption('max-jobs') ?? 0;
         $maxTime    = $params['max-time'] ?? CLI::getOption('max-time') ?? 0;
         $memory     = $params['memory'] ?? CLI::getOption('memory') ?? 128;
+        $priority   = $params['priority'] ?? CLI::getOption('priority') ?? $config->getQueuePriorities($queue) ?? 'default';
         $tries      = $params['tries'] ?? CLI::getOption('tries');
         $retryAfter = $params['retry-after'] ?? CLI::getOption('retry-after');
         $countJobs  = 0;
@@ -99,10 +103,18 @@ class QueueWork extends BaseCommand
 
         $startTime = microtime(true);
 
-        CLI::write('Listening for the jobs with the queue: ' . CLI::color($queue, 'light_cyan') . PHP_EOL, 'cyan');
+        CLI::write('Listening for the jobs with the queue: ' . CLI::color($queue, 'light_cyan'), 'cyan');
+
+        if ($priority !== 'default') {
+            CLI::write('Jobs will be consumed according to priority: ' . CLI::color($priority, 'light_cyan'), 'cyan');
+        }
+
+        CLI::write(PHP_EOL);
+
+        $priority = array_map('trim', explode(',', $priority));
 
         while (true) {
-            $work = service('queue')->pop($queue);
+            $work = service('queue')->pop($queue, $priority);
 
             if ($work === null) {
                 if ($stopWhenEmpty) {
@@ -216,7 +228,7 @@ class QueueWork extends BaseCommand
 
     private function checkMemory(int $memory): bool
     {
-        if (memory_get_peak_usage() > $memory * 1024 * 1024) {
+        if (memory_get_usage(true) > $memory * 1024 * 1024) {
             CLI::write(sprintf('The memory limit of %s MB was reached. Stopping.', $memory), 'yellow');
 
             return true;
@@ -234,7 +246,7 @@ class QueueWork extends BaseCommand
         }
 
         if ($startTime < (float) $time) {
-            CLI::write('This worker has been scheduled to end. Stopping.', 'yellow');
+            CLI::write('The termination of this worker has been planned. Stopping.', 'yellow');
 
             return true;
         }

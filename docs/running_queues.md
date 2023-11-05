@@ -24,6 +24,45 @@ So choosing the right command is not so obvious. We have to estimate how many jo
 
 You might use CodeIgniter [Tasks](https://github.com/codeigniter4/tasks) library to schedule queue worker instead of working directly with CRON.
 
+### Working with priorities
+
+By default, every job in the queue has the same priority. However, we can send the jobs to the queue with different priorities. This way some jobs may be handled earlier.
+
+As an example, we will define priorities for the `emails` queue:
+
+```php
+// app/Config/Queue.php
+
+public array $queueDefaultPriority = [
+    'emails' => 'low',
+];
+
+public array $queuePriorities = [
+    'emails' => ['high', 'low'],
+];
+```
+
+With this configuration, we can now add new jobs to the queue like this:
+
+```php
+// This job will have low priority:
+service('queue')->push('emails', 'email', ['message' => 'Email message with low priority']);
+// But this one will have high priority
+service('queue')->setPriority('high')->push('emails', 'email', ['message' => 'Email message with high priority']);
+```
+
+Now, if we run the worker:
+
+    php spark queue:work emails
+
+It will consume the jobs from the queue based on priority set in the config: `$queuePriorities`. So, first `high` priority and then `low` priority.
+
+But we can also run the worker like this:
+
+    php spark queue:work emails -priority low,high
+
+This way, worker will consume jobs with the `low` priority and then with `high`. The order set in the config file is override.
+
 ### Running many instances of the same queue
 
 As mentioned above, sometimes we may want to have multiple instances of the same command running at the same time. The queue is safe to use in that scenario with all databases except `SQLite3` since it doesn't guarantee that the job will be selected only by one process.

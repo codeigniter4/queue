@@ -5,6 +5,7 @@ namespace Michalsn\CodeIgniterQueue\Config;
 use CodeIgniter\Config\BaseConfig;
 use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
 use Michalsn\CodeIgniterQueue\Handlers\DatabaseHandler;
+use Michalsn\CodeIgniterQueue\Handlers\RedisHandler;
 
 class Queue extends BaseConfig
 {
@@ -18,6 +19,7 @@ class Queue extends BaseConfig
      */
     public array $handlers = [
         'database' => DatabaseHandler::class,
+        'redis'    => RedisHandler::class,
     ];
 
     /**
@@ -29,6 +31,17 @@ class Queue extends BaseConfig
     ];
 
     /**
+     * Redis and Predis handler config.
+     */
+    public array $redis = [
+        'host'     => '127.0.0.1',
+        'password' => null,
+        'port'     => 6379,
+        'timeout'  => 0,
+        'database' => 0,
+    ];
+
+    /**
      * Whether to keep the DONE jobs in the queue.
      */
     public bool $keepDoneJobs = false;
@@ -37,6 +50,18 @@ class Queue extends BaseConfig
      * Whether to save failed jobs for later review.
      */
     public bool $keepFailedJobs = true;
+
+    /**
+     * Default priorities for the queue
+     * if different from the "default".
+     */
+    public array $queueDefaultPriority = [];
+
+    /**
+     * Valid priorities in the order for the queue,
+     * if different from the "default".
+     */
+    public array $queuePriorities = [];
 
     /**
      * Your jobs handlers.
@@ -62,5 +87,17 @@ class Queue extends BaseConfig
         }
 
         return $this->jobHandlers[$name];
+    }
+
+    /**
+     * Stringify queue priorities.
+     */
+    public function getQueuePriorities(string $name): ?string
+    {
+        if (! isset($this->queuePriorities[$name])) {
+            return null;
+        }
+
+        return implode(',', $this->queuePriorities[$name]);
     }
 }

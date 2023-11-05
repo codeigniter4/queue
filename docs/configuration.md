@@ -17,6 +17,8 @@ Available options:
 - [$database](#database)
 - [$keepDoneJobs](#keepDoneJobs)
 - [$keepFailedJobs](#keepFailedJobs)
+- [$queueDefaultPriority](#queueDefaultPriority)
+- [$queuePriorities](#queuePriorities)
 - [$jobHandlers](#jobHandlers)
 
 ### $defaultHandler
@@ -43,6 +45,38 @@ If the job is done, should we keep it in the table? Default value: `false`.
 If the job failed, should we move it to the failed jobs table? Default value: `true`.
 
 This is very useful when you want to be able to see which tasks are failing and why.
+
+### $queueDefaultPriority
+
+The default priority for the `queue` if non default `queuePriorities` are set. Not set by default.
+
+This is needed only if you have defined non default priorities for the queue and the default priority should be different from the `default` value.
+
+Example:
+
+```php
+public array $queueDefaultPriority = [
+    'emails' => 'low',
+];
+```
+
+This means that all the jobs added to the `emails` queue will have the default priority set to `low`.
+
+### $queuePriorities
+
+The valid priorities for the `queue` in the order they will be consumed first. Not set by default.
+
+By default, the priority is set to `['default']`. If you want to have multiple priorities in the queue, you can define them here.
+
+Example:
+
+```php
+public array $queuePriorities = [
+    'emails' => ['high', 'low'],
+];
+```
+
+This means that the jobs added to the `emails` queue can have either `high` or `low` priority.
 
 ### $jobHandlers
 

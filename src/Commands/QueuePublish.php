@@ -59,6 +59,18 @@ class QueuePublish extends BaseCommand
 
                         return $this->jobHandlers[$name];
                     }
+
+                    /**
+                     * Stringify queue priorities.
+                     */
+                    public function getQueuePriorities(string $name): ?string
+                    {
+                        if (! isset($this->queuePriorities[$name])) {
+                            return null;
+                        }
+
+                        return implode(',', $this->queuePriorities[$name]);
+                    }
                 EOT;
             $contents = str_replace($method, '', $contents);
             file_put_contents($file, $contents);

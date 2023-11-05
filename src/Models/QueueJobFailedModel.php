@@ -13,7 +13,7 @@ class QueueJobFailedModel extends Model
     protected $returnType       = QueueJobFailed::class;
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['connection', 'queue', 'payload', 'exception'];
+    protected $allowedFields    = ['connection', 'queue', 'payload', 'priority', 'exception'];
 
     // Dates
     protected $useTimestamps = true;

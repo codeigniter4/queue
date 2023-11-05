@@ -40,6 +40,22 @@ class Queue extends BaseQueue
     public bool $keepFailedJobs = true;
 
     /**
+     * Default priorities for the queue
+     * if different from the "default".
+     */
+    public array $queueDefaultPriority = [
+        'queue' => 'low',
+    ];
+
+    /**
+     * Valid priorities for the queue,
+     * if different from the "default".
+     */
+    public array $queuePriorities = [
+        'queue' => ['high', 'low'],
+    ];
+
+    /**
      * Your jobs handlers.
      */
     public array $jobHandlers = [

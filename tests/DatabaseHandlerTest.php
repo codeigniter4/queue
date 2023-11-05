@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use CodeIgniter\Test\ReflectionHelper;
 use Exception;
 use Michalsn\CodeIgniterQueue\Entities\QueueJob;
 use Michalsn\CodeIgniterQueue\Enums\Status;
@@ -18,6 +19,8 @@ use Tests\Support\TestCase;
  */
 final class DatabaseHandlerTest extends TestCase
 {
+    use ReflectionHelper;
+
     protected $seed = TestQueueSeeder::class;
     private QueueConfig $config;
 
@@ -32,6 +35,23 @@ final class DatabaseHandlerTest extends TestCase
     {
         $handler = new DatabaseHandler($this->config);
         $this->assertInstanceOf(DatabaseHandler::class, $handler);
+    }
+
+    public function testPriority()
+    {
+        $handler = new DatabaseHandler($this->config);
+        $handler->setPriority('high');
+
+        $this->assertSame('high', self::getPrivateProperty($handler, 'priority'));
+    }
+
+    public function testPriorityException()
+    {
+        $this->expectException(QueueException::class);
+        $this->expectExceptionMessage('The priority name should consists only lowercase letters.');
+
+        $handler = new DatabaseHandler($this->config);
+        $handler->setPriority('high_:');
     }
 
     /**
@@ -52,6 +72,22 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
+    public function testPushWithPriority()
+    {
+        $handler = new DatabaseHandler($this->config);
+        $result  = $handler->setPriority('high')->push('queue', 'success', ['key' => 'value']);
+
+        $this->assertTrue($result);
+        $this->seeInDatabase('queue_jobs', [
+            'queue'    => 'queue',
+            'payload'  => json_encode(['job' => 'success', 'data' => ['key' => 'value']]),
+            'priority' => 'high',
+        ]);
+    }
+
+    /**
+     * @throws ReflectionException
+     */
     public function testPushException()
     {
         $this->expectException(QueueException::class);
@@ -64,10 +100,22 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
+    public function testPushWithPriorityException()
+    {
+        $this->expectException(QueueException::class);
+        $this->expectExceptionMessage('This queue has incorrectly defined priority: "invalid" for the queue: "queue".');
+
+        $handler = new DatabaseHandler($this->config);
+        $handler->setPriority('invalid')->push('queue', 'success', ['key' => 'value']);
+    }
+
+    /**
+     * @throws ReflectionException
+     */
     public function testPop()
     {
         $handler = new DatabaseHandler($this->config);
-        $result  = $handler->pop('queue1');
+        $result  = $handler->pop('queue1', ['default']);
 
         $this->assertInstanceOf(QueueJob::class, $result);
         $this->seeInDatabase('queue_jobs', [
@@ -82,7 +130,7 @@ final class DatabaseHandlerTest extends TestCase
     public function testPopEmpty()
     {
         $handler = new DatabaseHandler($this->config);
-        $result  = $handler->pop('queue123');
+        $result  = $handler->pop('queue123', ['default']);
 
         $this->assertNull($result);
     }
@@ -93,7 +141,7 @@ final class DatabaseHandlerTest extends TestCase
     public function testLater()
     {
         $handler  = new DatabaseHandler($this->config);
-        $queueJob = $handler->pop('queue1');
+        $queueJob = $handler->pop('queue1', ['default']);
 
         $this->seeInDatabase('queue_jobs', [
             'id'     => 2,
@@ -115,7 +163,7 @@ final class DatabaseHandlerTest extends TestCase
     public function testFailedAndKeepJob()
     {
         $handler  = new DatabaseHandler($this->config);
-        $queueJob = $handler->pop('queue1');
+        $queueJob = $handler->pop('queue1', ['default']);
 
         $err    = new Exception('Sample exception');
         $result = $handler->failed($queueJob, $err, true);
@@ -134,7 +182,7 @@ final class DatabaseHandlerTest extends TestCase
     public function testFailedAndDontKeepJob()
     {
         $handler  = new DatabaseHandler($this->config);
-        $queueJob = $handler->pop('queue1');
+        $queueJob = $handler->pop('queue1', ['default']);
 
         $err    = new Exception('Sample exception');
         $result = $handler->failed($queueJob, $err, false);
@@ -156,7 +204,7 @@ final class DatabaseHandlerTest extends TestCase
     public function testDoneAndKeepJob()
     {
         $handler  = new DatabaseHandler($this->config);
-        $queueJob = $handler->pop('queue1');
+        $queueJob = $handler->pop('queue1', ['default']);
 
         $result = $handler->done($queueJob, true);
 
@@ -173,7 +221,7 @@ final class DatabaseHandlerTest extends TestCase
     public function testDoneAndDontKeepJob()
     {
         $handler  = new DatabaseHandler($this->config);
-        $queueJob = $handler->pop('queue1');
+        $queueJob = $handler->pop('queue1', ['default']);
 
         $result = $handler->done($queueJob, false);
 
@@ -233,7 +281,7 @@ final class DatabaseHandlerTest extends TestCase
     public function testFlush()
     {
         $handler  = new DatabaseHandler($this->config);
-        $queueJob = $handler->pop('queue1');
+        $queueJob = $handler->pop('queue1', ['default']);
 
         $err    = new Exception('Sample exception here');
         $result = $handler->failed($queueJob, $err, true);

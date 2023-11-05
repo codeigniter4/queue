@@ -5,17 +5,14 @@ namespace Michalsn\CodeIgniterQueue\Handlers;
 use CodeIgniter\I18n\Time;
 use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
 use Michalsn\CodeIgniterQueue\Entities\QueueJob;
-use Michalsn\CodeIgniterQueue\Entities\QueueJobFailed;
 use Michalsn\CodeIgniterQueue\Enums\Status;
-use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
 use Michalsn\CodeIgniterQueue\Interfaces\QueueInterface;
-use Michalsn\CodeIgniterQueue\Models\QueueJobFailedModel;
 use Michalsn\CodeIgniterQueue\Models\QueueJobModel;
 use Michalsn\CodeIgniterQueue\Payload;
 use ReflectionException;
 use Throwable;
 
-class DatabaseHandler implements QueueInterface
+class DatabaseHandler extends BaseHandler implements QueueInterface
 {
     private readonly QueueJobModel $jobModel;
 
@@ -32,17 +29,18 @@ class DatabaseHandler implements QueueInterface
      */
     public function push(string $queue, string $job, array $data): bool
     {
-        if (! in_array($job, array_keys($this->config->jobHandlers), true)) {
-            throw QueueException::forIncorrectJobHandler();
-        }
+        $this->validateJobAndPriority($queue, $job);
 
         $queueJob = new QueueJob([
             'queue'        => $queue,
             'payload'      => new Payload($job, $data),
+            'priority'     => $this->priority,
             'status'       => Status::PENDING->value,
             'attempts'     => 0,
             'available_at' => Time::now()->timestamp,
         ]);
+
+        $this->priority = null;
 
         return $this->jobModel->insert($queueJob, false);
     }
@@ -52,9 +50,9 @@ class DatabaseHandler implements QueueInterface
      *
      * @throws ReflectionException
      */
-    public function pop(string $queue): ?QueueJob
+    public function pop(string $queue, array $priorities): ?QueueJob
     {
-        $queueJob = $this->jobModel->getFromQueue($queue);
+        $queueJob = $this->jobModel->getFromQueue($queue, $priorities);
 
         if ($queueJob === null) {
             return null;
@@ -88,16 +86,7 @@ class DatabaseHandler implements QueueInterface
     public function failed(QueueJob $queueJob, Throwable $err, bool $keepJob): bool
     {
         if ($keepJob) {
-            $exception = "Exception: {$err->getCode()} - {$err->getMessage()}" . PHP_EOL .
-                "file: {$err->getFile()}:{$err->getLine()}";
-
-            $queueJobFailed = new QueueJobFailed([
-                'connection' => 'database',
-                'queue'      => $queueJob->queue,
-                'payload'    => $queueJob->payload,
-                'exception'  => $exception,
-            ]);
-            model(QueueJobFailedModel::class)->insert($queueJobFailed, false);
+            $this->logFailed($queueJob, $err);
         }
 
         return $this->jobModel->delete($queueJob->id);
@@ -127,79 +116,5 @@ class DatabaseHandler implements QueueInterface
         }
 
         return $this->jobModel->delete();
-    }
-
-    /**
-     * Retry failed job.
-     * ∂
-     *
-     * @throws ReflectionException
-     */
-    public function retry(?int $id, ?string $queue): int
-    {
-        $jobs = model(QueueJobFailedModel::class)
-            ->when(
-                $id !== null,
-                static fn ($query) => $query->where('id', $id)
-            )
-            ->when(
-                $queue !== null,
-                static fn ($query) => $query->where('queue', $queue)
-            )
-            ->findAll();
-
-        foreach ($jobs as $job) {
-            $this->push($job->queue, $job->payload['job'], $job->payload['data']);
-            $this->forget($job->id);
-        }
-
-        return count($jobs);
-    }
-
-    /**
-     * Delete failed job by ID.
-     */
-    public function forget(int $id): bool
-    {
-        if (model(QueueJobFailedModel::class)->delete($id)) {
-            return model(QueueJobFailedModel::class)->affectedRows() > 0;
-        }
-
-        return false;
-    }
-
-    /**
-     * Delete many failed jobs at once.
-     */
-    public function flush(?int $hours, ?string $queue): bool
-    {
-        if ($hours === null && $queue === null) {
-            return model(QueueJobFailedModel::class)->truncate();
-        }
-
-        return model(QueueJobFailedModel::class)
-            ->when(
-                $hours !== null,
-                static fn ($query) => $query->where('failed_at <=', Time::now()->subHours($hours)->timestamp)
-            )
-            ->when(
-                $queue !== null,
-                static fn ($query) => $query->where('queue', $queue)
-            )
-            ->delete();
-    }
-
-    /**
-     * List failed queue jobs.
-     */
-    public function listFailed(?string $queue)
-    {
-        return model(QueueJobFailedModel::class)
-            ->when(
-                $queue !== null,
-                static fn ($query) => $query->where('queue', $queue)
-            )
-            ->orderBy('failed_at', 'desc')
-            ->findAll();
     }
 }

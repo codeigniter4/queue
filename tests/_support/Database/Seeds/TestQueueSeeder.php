@@ -16,6 +16,7 @@ class TestQueueSeeder extends Seeder
         model(QueueJobModel::class)->insert(new QueueJob([
             'queue'        => 'queue1',
             'payload'      => ['job' => 'success', 'data' => []],
+            'priority'     => 'default',
             'status'       => Status::RESERVED->value,
             'attempts'     => 0,
             'available_at' => 1_697_269_864,
@@ -24,6 +25,7 @@ class TestQueueSeeder extends Seeder
         model(QueueJobModel::class)->insert(new QueueJob([
             'queue'        => 'queue1',
             'payload'      => ['job' => 'failure', 'data' => []],
+            'priority'     => 'default',
             'status'       => Status::PENDING->value,
             'attempts'     => 0,
             'available_at' => 1_697_269_860,
@@ -33,6 +35,7 @@ class TestQueueSeeder extends Seeder
             'connection' => 'database',
             'queue'      => 'queue1',
             'payload'    => ['job' => 'failure', 'data' => []],
+            'priority'   => 'default',
             'exception'  => 'Exception info',
         ]));
     }
