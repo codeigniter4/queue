@@ -45,13 +45,22 @@ final class DatabaseHandlerTest extends TestCase
         $this->assertSame('high', self::getPrivateProperty($handler, 'priority'));
     }
 
-    public function testPriorityException()
+    public function testPriorityNameException()
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('The priority name should consists only lowercase letters.');
 
         $handler = new DatabaseHandler($this->config);
         $handler->setPriority('high_:');
+    }
+
+    public function testPriorityNameLengthException()
+    {
+        $this->expectException(QueueException::class);
+        $this->expectExceptionMessage('The priority name is too long. It should be no longer than 64 letters.');
+
+        $handler = new DatabaseHandler($this->config);
+        $handler->setPriority(str_repeat('a', 65));
     }
 
     /**
