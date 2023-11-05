@@ -16,6 +16,7 @@ use Throwable;
  */
 abstract class BaseHandler
 {
+    protected QueueConfig $config;
     protected ?string $priority = null;
 
     /**
