@@ -2,8 +2,12 @@
 
 namespace Michalsn\CodeIgniterQueue\Database\Migrations;
 
+use CodeIgniter\Database\BaseConnection;
 use CodeIgniter\Database\Migration;
 
+/**
+ * @property BaseConnection $db
+ */
 class AddPriorityField extends Migration
 {
     public function up()
@@ -24,6 +28,7 @@ class AddPriorityField extends Migration
         // Ugly fix for dropping the correct index
         // since it had no name given
         $keys = $this->db->getIndexData('queue_jobs');
+
         foreach ($keys as $key) {
             if ($key->fields === ['queue', 'status', 'available_at']) {
                 $this->forge->dropKey('queue_jobs', $key->name, false);
@@ -31,7 +36,7 @@ class AddPriorityField extends Migration
             }
         }
 
-        $this->forge->addKey(['queue', 'priority', 'status', 'available_at'], 'queue_priority_status_available_at');
+        $this->forge->addKey(['queue', 'priority', 'status', 'available_at'], false, false, 'queue_priority_status_available_at');
         $this->forge->processIndexes('queue_jobs');
     }
 
@@ -39,6 +44,7 @@ class AddPriorityField extends Migration
     {
         // Ugly fix for dropping the correct index
         $keys = $this->db->getIndexData('queue_jobs');
+
         foreach ($keys as $key) {
             if ($key->fields === ['queue', 'priority', 'status', 'available_at']) {
                 $this->forge->dropKey('queue_jobs', $key->name, false);

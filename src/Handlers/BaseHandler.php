@@ -12,7 +12,7 @@ use ReflectionException;
 use Throwable;
 
 /**
- * @property-read QueueConfig $config
+ * @property QueueConfig $config
  */
 abstract class BaseHandler
 {
