@@ -3,6 +3,7 @@
 namespace Michalsn\CodeIgniterQueue\Handlers;
 
 use CodeIgniter\I18n\Time;
+use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
 use Michalsn\CodeIgniterQueue\Entities\QueueJob;
 use Michalsn\CodeIgniterQueue\Entities\QueueJobFailed;
 use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
@@ -10,6 +11,9 @@ use Michalsn\CodeIgniterQueue\Models\QueueJobFailedModel;
 use ReflectionException;
 use Throwable;
 
+/**
+ * @property-read QueueConfig $config
+ */
 abstract class BaseHandler
 {
     protected ?string $priority = null;
