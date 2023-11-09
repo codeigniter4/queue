@@ -4,48 +4,31 @@ namespace Michalsn\CodeIgniterQueue\Handlers;
 
 use CodeIgniter\Exceptions\CriticalError;
 use CodeIgniter\I18n\Time;
+use Exception;
 use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
 use Michalsn\CodeIgniterQueue\Entities\QueueJob;
 use Michalsn\CodeIgniterQueue\Enums\Status;
 use Michalsn\CodeIgniterQueue\Interfaces\QueueInterface;
 use Michalsn\CodeIgniterQueue\Payload;
-use Redis;
-use RedisException;
+use Predis\Client;
 use Throwable;
 
-class RedisHandler extends BaseHandler implements QueueInterface
+class PredisHandler extends BaseHandler implements QueueInterface
 {
-    private readonly Redis $redis;
+    private readonly Client $predis;
 
     public function __construct(protected QueueConfig $config)
     {
-        $this->redis = new Redis();
-
         try {
-            if (! $this->redis->connect($config->redis['host'], ($config->redis['host'][0] === '/' ? 0 : $config->redis['port']), $config->redis['timeout'])) {
-                throw new CriticalError('Queue: Redis connection failed. Check your configuration.');
-            }
-
-            if (isset($config->redis['password']) && ! $this->redis->auth($config->redis['password'])) {
-                throw new CriticalError('Queue: Redis authentication failed.');
-            }
-
-            if (isset($config->redis['database']) && ! $this->redis->select($config->redis['database'])) {
-                throw new CriticalError('Queue: Redis select database failed.');
-            }
-
-            if (isset($config->redis['prefix']) && ! $this->redis->setOption(Redis::OPT_PREFIX, $config->redis['prefix'])) {
-                throw new CriticalError('Queue: Redis setting prefix failed.');
-            }
-        } catch (RedisException $e) {
-            throw new CriticalError('Queue: RedisException occurred with message (' . $e->getMessage() . ').');
+            $this->predis = new Client($config->predis, ['prefix' => $config->predis['prefix']]);
+            $this->predis->time();
+        } catch (Exception $e) {
+            throw new CriticalError('Queue: Predis connection refused (' . $e->getMessage() . ').');
         }
     }
 
     /**
      * Add job to the queue.
-     *
-     * @throws RedisException
      */
     public function push(string $queue, string $job, array $data): bool
     {
@@ -63,7 +46,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
             'available_at' => Time::now()->timestamp,
         ]);
 
-        $result = (int) $this->redis->zAdd("queues:{$queue}:{$this->priority}", Time::now()->timestamp, json_encode($queueJob));
+        $result = $this->predis->zadd("queues:{$queue}:{$this->priority}", [json_encode($queueJob) => Time::now()->timestamp]);
 
         $this->priority = null;
 
@@ -72,16 +55,14 @@ class RedisHandler extends BaseHandler implements QueueInterface
 
     /**
      * Get job from the queue.
-     *
-     * @throws RedisException
      */
     public function pop(string $queue, array $priorities): ?QueueJob
     {
         $now = Time::now()->timestamp;
 
         foreach ($priorities as $priority) {
-            if ($tasks = $this->redis->zRangeByScore("queues:{$queue}:{$priority}", '-inf', $now, ['limit' => [0, 1]])) {
-                if ($this->redis->zRem("queues:{$queue}:{$priority}", ...$tasks)) {
+            if ($tasks = $this->predis->zrangebyscore("queues:{$queue}:{$priority}", '-inf', $now, ['LIMIT' => [0, 1]])) {
+                if ($this->predis->zrem("queues:{$queue}:{$priority}", ...$tasks)) {
                     break;
                 }
                 $tasks = [];
@@ -98,23 +79,21 @@ class RedisHandler extends BaseHandler implements QueueInterface
         $queueJob->status = Status::RESERVED->value;
         $queueJob->syncOriginal();
 
-        $this->redis->hSet("queues:{$queue}::reserved", $queueJob->id, json_encode($queueJob));
+        $this->predis->hset("queues:{$queue}::reserved", $queueJob->id, json_encode($queueJob));
 
         return $queueJob;
     }
 
     /**
      * Schedule job for later
-     *
-     * @throws RedisException
      */
     public function later(QueueJob $queueJob, int $seconds): bool
     {
         $queueJob->status       = Status::PENDING->value;
         $queueJob->available_at = Time::now()->addSeconds($seconds)->timestamp;
 
-        if ($result = (int) $this->redis->zAdd("queues:{$queueJob->queue}:{$queueJob->priority}", $queueJob->available_at->timestamp, json_encode($queueJob))) {
-            $this->redis->hDel("queues:{$queueJob->queue}::reserved", $queueJob->id);
+        if ($result = $this->predis->zadd("queues:{$queueJob->queue}:{$queueJob->priority}", [json_encode($queueJob) => $queueJob->available_at->timestamp])) {
+            $this->predis->hdel("queues:{$queueJob->queue}::reserved", $queueJob->id);
         }
 
         return $result > 0;
@@ -129,41 +108,37 @@ class RedisHandler extends BaseHandler implements QueueInterface
             $this->logFailed($queueJob, $err);
         }
 
-        return (bool) $this->redis->hDel("queues:{$queueJob->queue}::reserved", $queueJob->id);
+        return (bool) $this->predis->hdel("queues:{$queueJob->queue}::reserved", $queueJob->id);
     }
 
     /**
      * Change job status to DONE or delete it.
-     *
-     * @throws RedisException
      */
     public function done(QueueJob $queueJob, bool $keepJob): bool
     {
         if ($keepJob) {
             $queueJob->status = Status::DONE->value;
-            $this->redis->lPush("queues:{$queueJob->queue}::done", json_encode($queueJob));
+            $this->predis->lpush("queues:{$queueJob->queue}::done", [json_encode($queueJob)]);
         }
 
-        return (bool) $this->redis->hDel("queues:{$queueJob->queue}::reserved", $queueJob->id);
+        return (bool) $this->predis->hdel("queues:{$queueJob->queue}::reserved", $queueJob->id);
     }
 
     /**
      * Delete queue jobs
-     *
-     * @throws RedisException
      */
     public function clear(?string $queue = null): bool
     {
         if ($queue !== null) {
-            if ($keys = $this->redis->keys("queues:{$queue}:*")) {
-                return (int) $this->redis->del($keys) > 0;
+            if ($keys = $this->predis->keys("queues:{$queue}:*")) {
+                return $this->predis->del($keys) > 0;
             }
 
             return true;
         }
 
-        if ($keys = $this->redis->keys('queues:*')) {
-            return (int) $this->redis->del($keys) > 0;
+        if ($keys = $this->predis->keys('queues:*')) {
+            return $this->predis->del($keys) > 0;
         }
 
         return true;

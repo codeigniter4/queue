@@ -136,6 +136,9 @@ abstract class BaseHandler
      */
     protected function validateJobAndPriority(string $queue, string $job): void
     {
+        // Validate queue
+        $this->validateQueue($queue);
+
         // Validate jobHandler.
         if (! in_array($job, array_keys($this->config->jobHandlers), true)) {
             throw QueueException::forIncorrectJobHandler();
@@ -148,6 +151,20 @@ abstract class BaseHandler
         // Validate non-standard priority.
         if (! in_array($this->priority, $this->config->queuePriorities[$queue] ?? ['default'], true)) {
             throw QueueException::forIncorrectQueuePriority($this->priority, $queue);
+        }
+    }
+
+    /**
+     * Validate queue name.
+     */
+    protected function validateQueue(string $queue): void
+    {
+        if (! preg_match('/^[a-z0-9_-]+$/', $queue)) {
+            throw QueueException::forIncorrectQueueFormat();
+        }
+
+        if (strlen($queue) > 64) {
+            throw QueueException::forTooLongQueueName();
         }
     }
 }

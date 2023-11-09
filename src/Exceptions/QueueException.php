@@ -11,6 +11,16 @@ final class QueueException extends RuntimeException
         return new self(lang('Queue.incorrectHandler'));
     }
 
+    public static function forIncorrectQueueFormat(): static
+    {
+        return new self(lang('Queue.incorrectQueueFormat'));
+    }
+
+    public static function forTooLongQueueName(): static
+    {
+        return new self(lang('Queue.tooLongQueueName'));
+    }
+
     public static function forIncorrectJobHandler(): static
     {
         return new self(lang('Queue.incorrectJobHandler'));

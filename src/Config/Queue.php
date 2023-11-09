@@ -5,6 +5,7 @@ namespace Michalsn\CodeIgniterQueue\Config;
 use CodeIgniter\Config\BaseConfig;
 use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
 use Michalsn\CodeIgniterQueue\Handlers\DatabaseHandler;
+use Michalsn\CodeIgniterQueue\Handlers\PredisHandler;
 use Michalsn\CodeIgniterQueue\Handlers\RedisHandler;
 
 class Queue extends BaseConfig
@@ -20,6 +21,7 @@ class Queue extends BaseConfig
     public array $handlers = [
         'database' => DatabaseHandler::class,
         'redis'    => RedisHandler::class,
+        'predis'   => PredisHandler::class,
     ];
 
     /**
@@ -31,7 +33,7 @@ class Queue extends BaseConfig
     ];
 
     /**
-     * Redis and Predis handler config.
+     * Redis handler config.
      */
     public array $redis = [
         'host'     => '127.0.0.1',
@@ -39,6 +41,20 @@ class Queue extends BaseConfig
         'port'     => 6379,
         'timeout'  => 0,
         'database' => 0,
+        'prefix'   => '',
+    ];
+
+    /**
+     * Predis handler config.
+     */
+    public array $predis = [
+        'scheme'   => 'tcp',
+        'host'     => '127.0.0.1',
+        'password' => null,
+        'port'     => 6379,
+        'timeout'  => 5,
+        'database' => 0,
+        'prefix'   => '',
     ];
 
     /**
