@@ -60,6 +60,7 @@ Allows you to consume jobs from a specific queue.
 * `-max-jobs` - The maximum number of jobs to handle before worker should exit. Disabled by default.
 * `-max-time` - The maximum number of seconds worker should run. Disabled by default.
 * `-memory` - The maximum memory in MB that worker can take. Default value: `128`.
+* `-priority` - The priority for the jobs from the queue (comma separated). If not provided explicit, will follow the priorities defined in the config via `$queuePriorities` for the given queue. Disabled by default.
 * `-tries` - The number of attempts after which the job will be considered as failed. Overrides settings from the Job class. Disabled by default.
 * `-retry-after` - The number of seconds after which the job is to be restarted in case of failure. Overrides settings from the Job class. Disabled by default.
 * `--stop-when-empty` - Stop when the queue is empty.
@@ -69,6 +70,10 @@ Allows you to consume jobs from a specific queue.
     php spark queue:work emails -max-jobs 5
 
 It will listen for 5 jobs from the `emails` queue and then stop.
+
+    php spark queue:work emails -max-jobs 5 -priority low,high
+
+It will work the same as the previous command but will first consume jobs from the `emails` queue that were added with the `low` priority.
 
 ### queue:stop
 

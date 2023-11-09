@@ -12,6 +12,7 @@ class QueueJobFailed extends Entity
         'connection' => 'string',
         'queue'      => 'string',
         'payload'    => 'json-array',
+        'priority'   => 'string',
         'exceptions' => 'string',
     ];
 }

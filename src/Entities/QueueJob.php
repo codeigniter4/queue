@@ -11,6 +11,7 @@ class QueueJob extends Entity
         'id'       => 'integer',
         'queue'    => 'string',
         'payload'  => 'json-array',
+        'priority' => 'string',
         'status'   => 'integer',
         'attempts' => 'integer',
     ];

@@ -4,11 +4,12 @@ namespace Michalsn\CodeIgniterQueue\Config;
 
 use CodeIgniter\Config\BaseService;
 use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
+use Michalsn\CodeIgniterQueue\Interfaces\QueueInterface;
 use Michalsn\CodeIgniterQueue\Queue;
 
 class Services extends BaseService
 {
-    public static function queue(?QueueConfig $config = null, $getShared = true)
+    public static function queue(?QueueConfig $config = null, $getShared = true): QueueInterface
     {
         if ($getShared) {
             return static::getSharedInstance('queue', $config);

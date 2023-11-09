@@ -2,6 +2,8 @@
 
 namespace Michalsn\CodeIgniterQueue\Models;
 
+use CodeIgniter\Database\BaseBuilder;
+use CodeIgniter\Database\RawSql;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Model;
 use Michalsn\CodeIgniterQueue\Entities\QueueJob;
@@ -16,7 +18,7 @@ class QueueJobModel extends Model
     protected $returnType       = QueueJob::class;
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['queue', 'payload', 'status', 'attempts', 'available_at'];
+    protected $allowedFields    = ['queue', 'payload', 'priority', 'status', 'attempts', 'available_at'];
 
     // Dates
     protected $useTimestamps = true;
@@ -35,7 +37,7 @@ class QueueJobModel extends Model
      *
      * @throws ReflectionException
      */
-    public function getFromQueue(string $name): ?QueueJob
+    public function getFromQueue(string $name, array $priority): ?QueueJob
     {
         // For SQLite3 memory database this will cause problems
         // so check if we're not in the testing environment first.
@@ -47,14 +49,14 @@ class QueueJobModel extends Model
         $this->db->transStart();
 
         // Prepare SQL
-        $sql = $this->builder()
+        $builder = $this->builder()
             ->where('queue', $name)
             ->where('status', Status::PENDING->value)
             ->where('available_at <=', Time::now()->timestamp)
-            ->orderBy('available_at', 'asc')
-            ->orderBy('id', 'asc')
-            ->limit(1)
-            ->getCompiledSelect();
+            ->limit(1);
+
+        $builder = $this->setPriority($builder, $priority);
+        $sql     = $builder->getCompiledSelect();
 
         $query = $this->db->query($this->skipLocked($sql));
         if ($query === false) {
@@ -89,5 +91,27 @@ class QueueJobModel extends Model
         }
 
         return $sql .= ' FOR UPDATE SKIP LOCKED';
+    }
+
+    /**
+     * Handle priority of the queue.
+     */
+    private function setPriority(BaseBuilder $builder, array $priority): BaseBuilder
+    {
+        $builder->whereIn('priority', $priority);
+
+        if ($priority !== ['default']) {
+            if ($this->db->DBDriver === 'SQLite3') {
+                $builder->orderBy(new RawSql('CASE priority ' . implode(' ', array_map(static fn ($value, $key) => "WHEN '{$value}' THEN {$key}", $priority, array_keys($priority))) . ' END'));
+            } else {
+                $builder->orderBy(new RawSql('FIELD(priority, ' . implode(',', array_map(static fn ($value) => "'{$value}'", $priority)) . ')'));
+            }
+        }
+
+        $builder
+            ->orderBy('available_at', 'asc')
+            ->orderBy('id', 'asc');
+
+        return $builder;
     }
 }

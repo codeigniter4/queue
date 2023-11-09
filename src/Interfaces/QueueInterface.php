@@ -9,7 +9,7 @@ interface QueueInterface
 {
     public function push(string $queue, string $job, array $data);
 
-    public function pop(string $queue);
+    public function pop(string $queue, array $priorities);
 
     public function later(QueueJob $queueJob, int $seconds);
 

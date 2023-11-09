@@ -39,6 +39,18 @@ class Queue extends BaseConfig
     public bool $keepFailedJobs = true;
 
     /**
+     * Default priorities for the queue
+     * if different from the "default".
+     */
+    public array $queueDefaultPriority = [];
+
+    /**
+     * Valid priorities in the order for the queue,
+     * if different from the "default".
+     */
+    public array $queuePriorities = [];
+
+    /**
      * Your jobs handlers.
      */
     public array $jobHandlers = [];
@@ -62,5 +74,17 @@ class Queue extends BaseConfig
         }
 
         return $this->jobHandlers[$name];
+    }
+
+    /**
+     * Stringify queue priorities.
+     */
+    public function getQueuePriorities(string $name): ?string
+    {
+        if (! isset($this->queuePriorities[$name])) {
+            return null;
+        }
+
+        return implode(',', $this->queuePriorities[$name]);
     }
 }
