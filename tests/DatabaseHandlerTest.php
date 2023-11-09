@@ -11,7 +11,7 @@ use Michalsn\CodeIgniterQueue\Handlers\DatabaseHandler;
 use Michalsn\CodeIgniterQueue\Models\QueueJobFailedModel;
 use ReflectionException;
 use Tests\Support\Config\Queue as QueueConfig;
-use Tests\Support\Database\Seeds\TestQueueSeeder;
+use Tests\Support\Database\Seeds\TestDatabaseQueueSeeder;
 use Tests\Support\TestCase;
 
 /**
@@ -21,7 +21,7 @@ final class DatabaseHandlerTest extends TestCase
 {
     use ReflectionHelper;
 
-    protected $seed = TestQueueSeeder::class;
+    protected $seed = TestDatabaseQueueSeeder::class;
     private QueueConfig $config;
 
     protected function setUp(): void

@@ -6,7 +6,7 @@ use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
 use Michalsn\CodeIgniterQueue\Handlers\DatabaseHandler;
 use Michalsn\CodeIgniterQueue\Queue;
 use Tests\Support\Config\Queue as QueueConfig;
-use Tests\Support\Database\Seeds\TestQueueSeeder;
+use Tests\Support\Database\Seeds\TestDatabaseQueueSeeder;
 use Tests\Support\TestCase;
 
 /**
@@ -14,7 +14,7 @@ use Tests\Support\TestCase;
  */
 final class QueueTest extends TestCase
 {
-    protected $seed = TestQueueSeeder::class;
+    protected $seed = TestDatabaseQueueSeeder::class;
     private QueueConfig $config;
 
     protected function setUp(): void
