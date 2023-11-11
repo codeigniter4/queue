@@ -171,7 +171,7 @@ final class DatabaseHandlerTest extends TestCase
         $this->expectExceptionMessage('The queue name is too long. It should be no longer than 64 letters.');
 
         $handler = new DatabaseHandler($this->config);
-        $handler->push(str_repeat('a',65), 'success', ['key' => 'value']);
+        $handler->push(str_repeat('a', 65), 'success', ['key' => 'value']);
     }
 
     /**
