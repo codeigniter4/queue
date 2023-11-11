@@ -58,7 +58,8 @@ class PredisHandler extends BaseHandler implements QueueInterface
      */
     public function pop(string $queue, array $priorities): ?QueueJob
     {
-        $now = Time::now()->timestamp;
+        $tasks = [];
+        $now   = Time::now()->timestamp;
 
         foreach ($priorities as $priority) {
             if ($tasks = $this->predis->zrangebyscore("queues:{$queue}:{$priority}", '-inf', $now, ['LIMIT' => [0, 1]])) {
