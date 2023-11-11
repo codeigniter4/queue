@@ -94,6 +94,38 @@ final class DatabaseHandlerTest extends TestCase
         ]);
     }
 
+    public function testPushAndPopWithPriority()
+    {
+        $handler = new DatabaseHandler($this->config);
+        $result  = $handler->push('queue', 'success', ['key1' => 'value1']);
+
+        $this->assertTrue($result);
+        $this->seeInDatabase('queue_jobs', [
+            'queue'    => 'queue',
+            'payload'  => json_encode(['job' => 'success', 'data' => ['key1' => 'value1']]),
+            'priority' => 'low',
+        ]);
+
+        $result = $handler->setPriority('high')->push('queue', 'success', ['key2' => 'value2']);
+
+        $this->assertTrue($result);
+        $this->seeInDatabase('queue_jobs', [
+            'queue'    => 'queue',
+            'payload'  => json_encode(['job' => 'success', 'data' => ['key2' => 'value2']]),
+            'priority' => 'high',
+        ]);
+
+        $result = $handler->pop('queue', ['high', 'low']);
+        $this->assertInstanceOf(QueueJob::class, $result);
+        $payload = ['job' => 'success', 'data' => ['key2' => 'value2']];
+        $this->assertSame($payload, $result->payload);
+
+        $result = $handler->pop('queue', ['high', 'low']);
+        $this->assertInstanceOf(QueueJob::class, $result);
+        $payload = ['job' => 'success', 'data' => ['key1' => 'value1']];
+        $this->assertSame($payload, $result->payload);
+    }
+
     /**
      * @throws ReflectionException
      */
@@ -116,6 +148,30 @@ final class DatabaseHandlerTest extends TestCase
 
         $handler = new DatabaseHandler($this->config);
         $handler->setPriority('invalid')->push('queue', 'success', ['key' => 'value']);
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function testPushWithIncorrectQueueFormatException()
+    {
+        $this->expectException(QueueException::class);
+        $this->expectExceptionMessage('The queue name should consists only lowercase letters or numbers.');
+
+        $handler = new DatabaseHandler($this->config);
+        $handler->push('queue*', 'success', ['key' => 'value']);
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function testPushWithTooLongQueueNameException()
+    {
+        $this->expectException(QueueException::class);
+        $this->expectExceptionMessage('The queue name is too long. It should be no longer than 64 letters.');
+
+        $handler = new DatabaseHandler($this->config);
+        $handler->push(str_repeat('a',65), 'success', ['key' => 'value']);
     }
 
     /**
@@ -282,6 +338,14 @@ final class DatabaseHandlerTest extends TestCase
         $this->dontSeeInDatabase('queue_jobs_failed', [
             'id' => 1,
         ]);
+    }
+
+    public function testForgetFalse()
+    {
+        $handler = new DatabaseHandler($this->config);
+        $result  = $handler->forget(1111);
+
+        $this->assertFalse($result);
     }
 
     /**

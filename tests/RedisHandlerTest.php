@@ -219,6 +219,23 @@ final class RedisHandlerTest extends TestCase
 
         $redis = self::getPrivateProperty($handler, 'redis');
         $this->assertSame(0, $redis->zCard('queues:queue1:default'));
+
+        $result = $handler->clear('queue1');
+        $this->assertTrue($result);
+    }
+
+    public function testClearAll()
+    {
+        $handler = new RedisHandler($this->config);
+
+        $result = $handler->clear();
+        $this->assertTrue($result);
+
+        $redis = self::getPrivateProperty($handler, 'redis');
+        $this->assertCount(0, $redis->keys('queues:*'));
+
+        $result = $handler->clear();
+        $this->assertTrue($result);
     }
 
     public function testRetry()

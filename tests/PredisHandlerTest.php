@@ -247,6 +247,26 @@ final class PredisHandlerTest extends TestCase
 
         $predis = self::getPrivateProperty($handler, 'predis');
         $this->assertSame(0, $predis->zcard('queues:queue1:default'));
+
+        $result = $handler->clear('queue1');
+        $this->assertTrue($result);
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function testClearAll()
+    {
+        $handler = new PredisHandler($this->config);
+        $result  = $handler->clear();
+
+        $this->assertTrue($result);
+
+        $predis = self::getPrivateProperty($handler, 'predis');
+        $this->assertCount(0, $predis->keys('queues:*'));
+
+        $result = $handler->clear();
+        $this->assertTrue($result);
     }
 
     /**
