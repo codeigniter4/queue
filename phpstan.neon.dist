@@ -21,11 +21,24 @@ parameters:
 	        paths:
 	            - src/Handlers/BaseHandler.php
 	    -
+	        message: '#Call to deprecated function random_string\(\):#'
+	        paths:
+	            - src/Handlers/RedisHandler.php
+	            - src/Handlers/PredisHandler.php
+	    -
+	        message: '#Cannot access property \$timestamp on array\|bool\|float\|int\|object\|string.#'
+	        paths:
+	            - tests/_support/Database/Seeds/TestRedisQueueSeeder.php
+	    -
 	        message: '#Access to an undefined property CodeIgniter\\I18n\\Time::\$timestamp.#'
 	        paths:
 	            - src/Handlers/BaseHandler.php
 	            - src/Handlers/DatabaseHandler.php
+	            - src/Handlers/RedisHandler.php
+	            - src/Handlers/PredisHandler.php
 	            - src/Models/QueueJobModel.php
+	            - tests/RedisHandlerTest.php
+	            - tests/PredisHandlerTest.php
 	    -
 	        message: '#Call to an undefined method Michalsn\\CodeIgniterQueue\\Models\\QueueJobFailedModel::affectedRows\(\).#'
 	        paths:

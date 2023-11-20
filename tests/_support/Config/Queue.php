@@ -4,6 +4,8 @@ namespace Tests\Support\Config;
 
 use Michalsn\CodeIgniterQueue\Config\Queue as BaseQueue;
 use Michalsn\CodeIgniterQueue\Handlers\DatabaseHandler;
+use Michalsn\CodeIgniterQueue\Handlers\PredisHandler;
+use Michalsn\CodeIgniterQueue\Handlers\RedisHandler;
 use Tests\Support\Jobs\Failure;
 use Tests\Support\Jobs\Success;
 
@@ -19,6 +21,8 @@ class Queue extends BaseQueue
      */
     public array $handlers = [
         'database' => DatabaseHandler::class,
+        'redis'    => RedisHandler::class,
+        'predis'   => PredisHandler::class,
     ];
 
     /**
@@ -27,6 +31,30 @@ class Queue extends BaseQueue
     public array $database = [
         'dbGroup'   => 'default',
         'getShared' => true,
+    ];
+
+    /**
+     * Redis and Predis handler config.
+     */
+    public array $redis = [
+        'host'     => '127.0.0.1',
+        'password' => null,
+        'port'     => 6379,
+        'timeout'  => 0,
+        'database' => 0,
+    ];
+
+    /**
+     * Predis handler config.
+     */
+    public array $predis = [
+        'scheme'   => 'tcp',
+        'host'     => '127.0.0.1',
+        'password' => null,
+        'port'     => 6379,
+        'timeout'  => 5,
+        'database' => 0,
+        'prefix'   => '',
     ];
 
     /**

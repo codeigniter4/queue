@@ -9,7 +9,7 @@ use Michalsn\CodeIgniterQueue\Enums\Status;
 use Michalsn\CodeIgniterQueue\Models\QueueJobFailedModel;
 use Michalsn\CodeIgniterQueue\Models\QueueJobModel;
 
-class TestQueueSeeder extends Seeder
+class TestDatabaseQueueSeeder extends Seeder
 {
     public function run(): void
     {
