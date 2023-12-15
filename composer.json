@@ -1,5 +1,5 @@
 {
-    "name": "michalsn/codeigniter-queue",
+    "name": "codeigniter4/queue",
     "description": "Queues for CodeIgniter 4 framework",
     "license": "MIT",
     "type": "library",
@@ -11,20 +11,20 @@
             "role": "Developer"
         }
     ],
-    "homepage": "https://github.com/michalsn/codeigniter-queue",
+    "homepage": "https://github.com/codeigniter4/queue",
     "require": {
         "php": "^8.1"
     },
     "require-dev": {
         "codeigniter4/devkit": "^1.0",
-        "codeigniter4/framework": "^4.4",
+        "codeigniter4/framework": "^4.3",
         "predis/predis": "^2.0"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "Michalsn\\CodeIgniterQueue\\": "src"
+            "CodeIgniter\\Queue\\": "src"
         }
     },
     "autoload-dev": {
