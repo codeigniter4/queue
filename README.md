@@ -2,17 +2,17 @@
 
 Queues for the CodeIgniter 4 framework.
 
-[![PHPUnit](https://github.com/michalsn/codeigniter-queue/actions/workflows/phpunit.yml/badge.svg)](https://github.com/michalsn/codeigniter-queue/actions/workflows/phpunit.yml)
-[![PHPStan](https://github.com/michalsn/codeigniter-queue/actions/workflows/phpstan.yml/badge.svg)](https://github.com/michalsn/codeigniter-queue/actions/workflows/phpstan.yml)
-[![Deptrac](https://github.com/michalsn/codeigniter-queue/actions/workflows/deptrac.yml/badge.svg)](https://github.com/michalsn/codeigniter-queue/actions/workflows/deptrac.yml)
-[![Coverage Status](https://coveralls.io/repos/github/michalsn/codeigniter-queue/badge.svg?branch=develop)](https://coveralls.io/github/michalsn/codeigniter-queue?branch=develop)
+[![PHPUnit](https://github.com/codeigniter4/queue/actions/workflows/phpunit.yml/badge.svg)](https://github.com/codeigniter4/queue/actions/workflows/phpunit.yml)
+[![PHPStan](https://github.com/codeigniter4/queue/actions/workflows/phpstan.yml/badge.svg)](https://github.com/codeigniter4/queue/actions/workflows/phpstan.yml)
+[![Deptrac](https://github.com/codeigniter4/queue/actions/workflows/deptrac.yml/badge.svg)](https://github.com/codeigniter4/queue/actions/workflows/deptrac.yml)
+[![Coverage Status](https://coveralls.io/repos/github/codeigniter4/queue/badge.svg?branch=develop)](https://coveralls.io/github/codeigniter4/queue?branch=develop)
 
 ![PHP](https://img.shields.io/badge/PHP-%5E8.1-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-%5E4.3-blue)
 
 ## Installation
 
-    composer require michalsn/codeigniter-queue
+    composer require codeigniter4/queue
 
 Migrate your database:
 
@@ -58,4 +58,4 @@ Run the queue worker:
 
 ## Docs
 
-https://michalsn.github.io/codeigniter-queue/
+https://codeigniter4.github.io/queue/
