@@ -17,7 +17,7 @@ parameters:
 	        paths:
 	            - src/Config/Services.php
 	    -
-	        message: '#Call to an undefined method Michalsn\\CodeIgniterQueue\\Handlers\\BaseHandler::push\(\).#'
+	        message: '#Call to an undefined method CodeIgniter\\Queue\\Handlers\\BaseHandler::push\(\).#'
 	        paths:
 	            - src/Handlers/BaseHandler.php
 	    -
@@ -40,19 +40,19 @@ parameters:
 	            - tests/RedisHandlerTest.php
 	            - tests/PredisHandlerTest.php
 	    -
-	        message: '#Call to an undefined method Michalsn\\CodeIgniterQueue\\Models\\QueueJobFailedModel::affectedRows\(\).#'
+	        message: '#Call to an undefined method CodeIgniter\\Queue\\Models\\QueueJobFailedModel::affectedRows\(\).#'
 	        paths:
 	            - src/Handlers/BaseHandler.php
 	    -
-	        message: '#Call to an undefined method Michalsn\\CodeIgniterQueue\\Models\\QueueJobFailedModel::truncate\(\).#'
+	        message: '#Call to an undefined method CodeIgniter\\Queue\\Models\\QueueJobFailedModel::truncate\(\).#'
 	        paths:
 	            - src/Handlers/BaseHandler.php
 	    -
-	        message: '#Parameter \#3 \$tries of method Michalsn\\CodeIgniterQueue\\Commands\\QueueWork::handleWork\(\) expects int\|null, string\|true\|null given.#'
+	        message: '#Parameter \#3 \$tries of method CodeIgniter\\Queue\\Commands\\QueueWork::handleWork\(\) expects int\|null, string\|true\|null given.#'
 	        paths:
 	            - src/Commands/QueueWork.php
 	    -
-	        message: '#Parameter \#4 \$retryAfter of method Michalsn\\CodeIgniterQueue\\Commands\\QueueWork::handleWork\(\) expects int\|null, string\|true\|null given.#'
+	        message: '#Parameter \#4 \$retryAfter of method CodeIgniter\\Queue\\Commands\\QueueWork::handleWork\(\) expects int\|null, string\|true\|null given.#'
 	        paths:
 	            - src/Commands/QueueWork.php
 	    -
