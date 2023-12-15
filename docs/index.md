@@ -14,14 +14,14 @@ Listen for queued jobs.
 
 ### Requirements
 
-![PHP](https://img.shields.io/badge/PHP-%5E8.1-blue)
-![CodeIgniter](https://img.shields.io/badge/CodeIgniter-%5E4.3-blue)
+![PHP](https://img.shields.io/badge/PHP-%5E8.1-red)
+![CodeIgniter](https://img.shields.io/badge/CodeIgniter-%5E4.3-red)
 
 ### Table of Contents
 
 * [Installation](installation.md)
 * [Configuration](configuration.md)
-* [Basic usage](basic_usage.md)
-* [Running queues](running_queues.md)
+* [Basic usage](basic-usage)
+* [Running queues](running-queues)
 * [Commands](commands.md)
 * [Troubleshooting](troubleshooting.md)

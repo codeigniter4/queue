@@ -6,15 +6,15 @@ Here are all the commands you can use with the Queue library.
 
 Available options:
 
-- [queue:publish](#queuePublish)
-- [queue:job](#queueJob)
-- [queue:work](#queueWork)
-- [queue:stop](#queueStop)
-- [queue:clear](#queueClear)
-- [queue:failed](#queueFailed)
-- [queue:retry](#queueRetry)
-- [queue:forget](#queueForget)
-- [queue:flush](#queueFlush)
+- [queue:publish](#queuepublish)
+- [queue:job](#queuejob)
+- [queue:work](#queuework)
+- [queue:stop](#queuestop)
+- [queue:clear](#queueclear)
+- [queue:failed](#queuefailed)
+- [queue:retry](#queueretry)
+- [queue:forget](#queueforget)
+- [queue:flush](#queueflush)
 
 
 ### queue:publish

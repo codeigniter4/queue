@@ -8,7 +8,7 @@
 
 The only thing you have to do is to run this command, and you're ready to go.
 
-    composer require michalsn/codeigniter-queue
+    composer require codeigniter4/queue
 
 ## Manual Installation
 

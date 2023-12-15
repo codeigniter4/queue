@@ -12,16 +12,16 @@ We will get our copy ready for modifications.
 
 Available options:
 
-- [$defaultHandler](#defaultHandler)
+- [$defaultHandler](#defaulthandler)
 - [$handlers](#handlers)
 - [$database](#database)
 - [$redis](#redis)
 - [$predis](#predis)
-- [$keepDoneJobs](#keepDoneJobs)
-- [$keepFailedJobs](#keepFailedJobs)
-- [$queueDefaultPriority](#queueDefaultPriority)
-- [$queuePriorities](#queuePriorities)
-- [$jobHandlers](#jobHandlers)
+- [$keepDoneJobs](#keepdonejobs)
+- [$keepFailedJobs](#keepfailedjobs)
+- [$queueDefaultPriority](#queuedefaultpriority)
+- [$queuePriorities](#queuepriorities)
+- [$jobHandlers](#jobhandlers)
 
 ### $defaultHandler
 
