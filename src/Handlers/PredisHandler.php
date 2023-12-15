@@ -4,12 +4,12 @@ namespace CodeIgniter\Queue\Handlers;
 
 use CodeIgniter\Exceptions\CriticalError;
 use CodeIgniter\I18n\Time;
-use Exception;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Payload;
+use Exception;
 use Predis\Client;
 use Throwable;
 

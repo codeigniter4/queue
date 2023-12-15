@@ -4,9 +4,9 @@ namespace CodeIgniter\Queue\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
-use Exception;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
+use Exception;
 use Throwable;
 
 class QueueWork extends BaseCommand
