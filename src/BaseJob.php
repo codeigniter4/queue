@@ -1,6 +1,6 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue;
+namespace CodeIgniter\Queue;
 
 abstract class BaseJob
 {

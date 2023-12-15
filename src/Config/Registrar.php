@@ -1,6 +1,6 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Config;
+namespace CodeIgniter\Queue\Config;
 
 class Registrar
 {
@@ -8,7 +8,7 @@ class Registrar
     {
         return [
             'views' => [
-                'queue:job' => 'Michalsn\CodeIgniterQueue\Commands\Generators\Views\job.tpl.php',
+                'queue:job' => 'CodeIgniter\Queue\Commands\Generators\Views\job.tpl.php',
             ],
         ];
     }

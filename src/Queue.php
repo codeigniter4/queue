@@ -1,10 +1,10 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue;
+namespace CodeIgniter\Queue;
 
-use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
-use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
-use Michalsn\CodeIgniterQueue\Interfaces\QueueInterface;
+use CodeIgniter\Queue\Config\Queue as QueueConfig;
+use CodeIgniter\Queue\Exceptions\QueueException;
+use CodeIgniter\Queue\Interfaces\QueueInterface;
 
 class Queue
 {

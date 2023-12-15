@@ -1,10 +1,10 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Commands;
+namespace CodeIgniter\Queue\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
-use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
+use CodeIgniter\Queue\Config\Queue as QueueConfig;
 
 class QueueFailed extends BaseCommand
 {

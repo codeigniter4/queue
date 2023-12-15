@@ -1,9 +1,9 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Models;
+namespace CodeIgniter\Queue\Models;
 
 use CodeIgniter\Model;
-use Michalsn\CodeIgniterQueue\Entities\QueueJobFailed;
+use CodeIgniter\Queue\Entities\QueueJobFailed;
 
 class QueueJobFailedModel extends Model
 {

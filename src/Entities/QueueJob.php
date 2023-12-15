@@ -1,6 +1,6 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Entities;
+namespace CodeIgniter\Queue\Entities;
 
 use CodeIgniter\Entity\Entity;
 

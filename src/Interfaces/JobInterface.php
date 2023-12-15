@@ -1,6 +1,6 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Interfaces;
+namespace CodeIgniter\Queue\Interfaces;
 
 interface JobInterface
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Enums;
+namespace CodeIgniter\Queue\Enums;
 
 enum Status: int
 {

@@ -1,13 +1,13 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Handlers;
+namespace CodeIgniter\Queue\Handlers;
 
 use CodeIgniter\I18n\Time;
-use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
-use Michalsn\CodeIgniterQueue\Entities\QueueJob;
-use Michalsn\CodeIgniterQueue\Entities\QueueJobFailed;
-use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
-use Michalsn\CodeIgniterQueue\Models\QueueJobFailedModel;
+use CodeIgniter\Queue\Config\Queue as QueueConfig;
+use CodeIgniter\Queue\Entities\QueueJob;
+use CodeIgniter\Queue\Entities\QueueJobFailed;
+use CodeIgniter\Queue\Exceptions\QueueException;
+use CodeIgniter\Queue\Models\QueueJobFailedModel;
 use ReflectionException;
 use Throwable;
 

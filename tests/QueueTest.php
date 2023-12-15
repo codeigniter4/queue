@@ -2,9 +2,9 @@
 
 namespace Tests;
 
-use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
-use Michalsn\CodeIgniterQueue\Handlers\DatabaseHandler;
-use Michalsn\CodeIgniterQueue\Queue;
+use CodeIgniter\Queue\Exceptions\QueueException;
+use CodeIgniter\Queue\Handlers\DatabaseHandler;
+use CodeIgniter\Queue\Queue;
 use Tests\Support\Config\Queue as QueueConfig;
 use Tests\Support\Database\Seeds\TestDatabaseQueueSeeder;
 use Tests\Support\TestCase;

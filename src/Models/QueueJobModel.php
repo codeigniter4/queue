@@ -1,13 +1,13 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Models;
+namespace CodeIgniter\Queue\Models;
 
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Database\RawSql;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Model;
-use Michalsn\CodeIgniterQueue\Entities\QueueJob;
-use Michalsn\CodeIgniterQueue\Enums\Status;
+use CodeIgniter\Queue\Entities\QueueJob;
+use CodeIgniter\Queue\Enums\Status;
 use ReflectionException;
 
 class QueueJobModel extends Model

@@ -1,6 +1,6 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Database\Migrations;
+namespace CodeIgniter\Queue\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
