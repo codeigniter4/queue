@@ -80,7 +80,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
         $queueJob->status = Status::RESERVED->value;
         $queueJob->syncOriginal();
 
-        $this->predis->hset("queues:{$queue}::reserved", $queueJob->id, json_encode($queueJob));
+        $this->predis->hset("queues:{$queue}::reserved", (string) $queueJob->id, json_encode($queueJob));
 
         return $queueJob;
     }

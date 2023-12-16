@@ -94,7 +94,9 @@ class QueueWork extends BaseCommand
         $memory     = $params['memory'] ?? CLI::getOption('memory') ?? 128;
         $priority   = $params['priority'] ?? CLI::getOption('priority') ?? $config->getQueuePriorities($queue) ?? 'default';
         $tries      = $params['tries'] ?? CLI::getOption('tries');
+        $tries      = ($tries !== null) ? (int) $tries : $tries;
         $retryAfter = $params['retry-after'] ?? CLI::getOption('retry-after');
+        $retryAfter = ($retryAfter !== null) ? (int) $retryAfter : $retryAfter;
         $countJobs  = 0;
 
         if (array_key_exists('stop-when-empty', $params) || CLI::getOption('stop-when-empty')) {
