@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CodeIgniter\Queue\Models;
 
 use CodeIgniter\Database\BaseBuilder;
-use CodeIgniter\Database\RawSql;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Model;
 use CodeIgniter\Queue\Entities\QueueJob;
@@ -102,9 +103,27 @@ class QueueJobModel extends Model
 
         if ($priority !== ['default']) {
             if ($this->db->DBDriver === 'SQLite3') {
-                $builder->orderBy(new RawSql('CASE priority ' . implode(' ', array_map(static fn ($value, $key) => "WHEN '{$value}' THEN {$key}", $priority, array_keys($priority))) . ' END'));
+                $builder->orderBy(
+                    'CASE priority '
+                    . implode(
+                        ' ',
+                        array_map(static fn ($value, $key) => "WHEN '{$value}' THEN {$key}", $priority, array_keys($priority))
+                    )
+                    . ' END',
+                    '',
+                    false
+                );
             } else {
-                $builder->orderBy(new RawSql('FIELD(priority, ' . implode(',', array_map(static fn ($value) => "'{$value}'", $priority)) . ')'));
+                $builder->orderBy(
+                    'FIELD(priority, '
+                    . implode(
+                        ',',
+                        array_map(static fn ($value) => "'{$value}'", $priority)
+                    )
+                    . ')',
+                    '',
+                    false
+                );
             }
         }
 
