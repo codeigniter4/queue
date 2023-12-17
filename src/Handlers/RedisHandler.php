@@ -89,7 +89,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
             }
         }
 
-        if (empty($tasks[0])) {
+        if ($tasks === []) {
             return null;
         }
 
@@ -114,7 +114,12 @@ class RedisHandler extends BaseHandler implements QueueInterface
         $queueJob->status       = Status::PENDING->value;
         $queueJob->available_at = Time::now()->addSeconds($seconds)->timestamp;
 
-        if ($result = (int) $this->redis->zAdd("queues:{$queueJob->queue}:{$queueJob->priority}", $queueJob->available_at->timestamp, json_encode($queueJob))) {
+        $result = (int) $this->redis->zAdd(
+            "queues:{$queueJob->queue}:{$queueJob->priority}",
+            $queueJob->available_at->timestamp,
+            json_encode($queueJob)
+        );
+        if ($result !== 0) {
             $this->redis->hDel("queues:{$queueJob->queue}::reserved", (string) $queueJob->id);
         }
 

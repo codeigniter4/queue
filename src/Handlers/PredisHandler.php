@@ -62,15 +62,22 @@ class PredisHandler extends BaseHandler implements QueueInterface
         $now   = Time::now()->timestamp;
 
         foreach ($priorities as $priority) {
-            if ($tasks = $this->predis->zrangebyscore("queues:{$queue}:{$priority}", '-inf', $now, ['LIMIT' => [0, 1]])) {
-                if ($this->predis->zrem("queues:{$queue}:{$priority}", ...$tasks)) {
+            $tasks = $this->predis->zrangebyscore(
+                "queues:{$queue}:{$priority}",
+                '-inf',
+                $now,
+                ['LIMIT' => [0, 1]]
+            );
+            if ($tasks !== []) {
+                $removed = $this->predis->zrem("queues:{$queue}:{$priority}", ...$tasks);
+                if ($removed !== 0) {
                     break;
                 }
                 $tasks = [];
             }
         }
 
-        if (empty($tasks[0])) {
+        if ($tasks === []) {
             return null;
         }
 
@@ -93,7 +100,11 @@ class PredisHandler extends BaseHandler implements QueueInterface
         $queueJob->status       = Status::PENDING->value;
         $queueJob->available_at = Time::now()->addSeconds($seconds)->timestamp;
 
-        if ($result = $this->predis->zadd("queues:{$queueJob->queue}:{$queueJob->priority}", [json_encode($queueJob) => $queueJob->available_at->timestamp])) {
+        $result = $this->predis->zadd(
+            "queues:{$queueJob->queue}:{$queueJob->priority}",
+            [json_encode($queueJob) => $queueJob->available_at->timestamp]
+        );
+        if ($result !== 0) {
             $this->predis->hdel("queues:{$queueJob->queue}::reserved", [$queueJob->id]);
         }
 
@@ -131,14 +142,16 @@ class PredisHandler extends BaseHandler implements QueueInterface
     public function clear(?string $queue = null): bool
     {
         if ($queue !== null) {
-            if ($keys = $this->predis->keys("queues:{$queue}:*")) {
+            $keys = $this->predis->keys("queues:{$queue}:*");
+            if ($keys !== []) {
                 return $this->predis->del($keys) > 0;
             }
 
             return true;
         }
 
-        if ($keys = $this->predis->keys('queues:*')) {
+        $keys = $this->predis->keys('queues:*');
+        if ($keys !== []) {
             return $this->predis->del($keys) > 0;
         }
 
