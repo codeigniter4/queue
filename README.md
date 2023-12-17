@@ -9,6 +9,7 @@ Queues for the CodeIgniter 4 framework.
 
 ![PHP](https://img.shields.io/badge/PHP-%5E8.1-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-%5E4.3-blue)
+![License](https://img.shields.io/badge/License-MIT-blue)
 
 ## Installation
 
@@ -58,4 +59,11 @@ Run the queue worker:
 
 ## Docs
 
-https://codeigniter4.github.io/queue/
+Read the full documentation: https://queue.codeigniter.com
+
+## Contributing
+
+We does accept and encourage contributions from the community in any shape. It doesn't matter
+whether you can code, write documentation, or help find bugs, all contributions are welcome.
+See the [CONTRIBUTING.md](CONTRIBUTING.md) file for details.
+
