@@ -79,7 +79,7 @@ class QueueWork extends BaseCommand
         $stopWhenEmpty = false;
         $waiting       = false;
 
-        // Read params
+        // Read queue name from params
         if (! $queue = array_shift($params)) {
             CLI::error('The queueName is not specified.');
 
@@ -87,17 +87,25 @@ class QueueWork extends BaseCommand
         }
 
         // Read options
-        $sleep      = $params['sleep'] ?? CLI::getOption('sleep') ?? 10;
-        $rest       = $params['rest'] ?? CLI::getOption('rest') ?? 0;
-        $maxJobs    = $params['max-jobs'] ?? CLI::getOption('max-jobs') ?? 0;
-        $maxTime    = $params['max-time'] ?? CLI::getOption('max-time') ?? 0;
-        $memory     = $params['memory'] ?? CLI::getOption('memory') ?? 128;
-        $priority   = $params['priority'] ?? CLI::getOption('priority') ?? $config->getQueuePriorities($queue) ?? 'default';
-        $tries      = $params['tries'] ?? CLI::getOption('tries');
-        $tries      = ($tries !== null) ? (int) $tries : $tries;
-        $retryAfter = $params['retry-after'] ?? CLI::getOption('retry-after');
-        $retryAfter = ($retryAfter !== null) ? (int) $retryAfter : $retryAfter;
-        $countJobs  = 0;
+        [
+            $error,
+            $sleep,
+            $rest,
+            $maxJobs,
+            $maxTime,
+            $memory,
+            $priority,
+            $tries,
+            $retryAfter
+        ] = $this->readOptions($params, $config, $queue);
+
+        if ($error !== null) {
+            CLI::write($error, 'red');
+
+            return EXIT_ERROR;
+        }
+
+        $countJobs = 0;
 
         if (array_key_exists('stop-when-empty', $params) || CLI::getOption('stop-when-empty')) {
             $stopWhenEmpty = true;
@@ -113,7 +121,7 @@ class QueueWork extends BaseCommand
 
         CLI::write(PHP_EOL);
 
-        $priority = array_map('trim', explode(',', $priority));
+        $priority = array_map('trim', explode(',', (string) $priority));
 
         while (true) {
             $work = service('queue')->pop($queue, $priority);
@@ -175,6 +183,42 @@ class QueueWork extends BaseCommand
                 }
             }
         }
+    }
+
+    private function readOptions(array $params, QueueConfig $config, string $queue): array
+    {
+        $options = [
+            'error'      => null,
+            'sleep'      => $params['sleep'] ?? CLI::getOption('sleep') ?? 10,
+            'rest'       => $params['rest'] ?? CLI::getOption('rest') ?? 0,
+            'maxJobs'    => $params['max-jobs'] ?? CLI::getOption('max-jobs') ?? 0,
+            'maxTime'    => $params['max-time'] ?? CLI::getOption('max-time') ?? 0,
+            'memory'     => $params['memory'] ?? CLI::getOption('memory') ?? 128,
+            'priority'   => $params['priority'] ?? CLI::getOption('priority') ?? $config->getQueuePriorities($queue) ?? 'default',
+            'tries'      => $params['tries'] ?? CLI::getOption('tries'),
+            'retryAfter' => $params['retry-after'] ?? CLI::getOption('retry-after'),
+        ];
+
+        // Options that, being defined, cannot be `true`
+        $keys = ['sleep', 'rest', 'maxJobs', 'maxTime', 'memory', 'priority', 'tries', 'retyAfter'];
+
+        foreach ($keys as $key) {
+            if ($options[$key] === true) {
+                $options['error'] = sprintf('Option: "-%s" must have a defined value.', $key);
+
+                return array_values($options);
+            }
+        }
+        // Options that, being defined, have to be `int`
+        $keys = array_diff($keys, ['priority']);
+
+        foreach ($keys as $key) {
+            if ($options[$key] !== null && ! is_int($options[$key])) {
+                $options[$key] = (int) $options[$key];
+            }
+        }
+
+        return array_values($options);
     }
 
     private function handleWork(QueueJob $work, QueueConfig $config, ?int $tries, ?int $retryAfter): void
