@@ -18,7 +18,8 @@
     "require-dev": {
         "codeigniter4/devkit": "^1.0",
         "codeigniter4/framework": "^4.3",
-        "predis/predis": "^2.0"
+        "predis/predis": "^2.0",
+        "phpstan/phpstan-strict-rules": "^1.5"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
