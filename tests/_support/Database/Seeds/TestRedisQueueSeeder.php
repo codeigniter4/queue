@@ -40,7 +40,7 @@ class TestRedisQueueSeeder extends Seeder
             'attempts'     => 0,
             'available_at' => 1_697_269_864,
         ]);
-        $redis->hSet("queues:{$jobQueue->queue}::reserved", $jobQueue->id, json_encode($jobQueue));
+        $redis->hSet("queues:{$jobQueue->queue}::reserved", (string) $jobQueue->id, json_encode($jobQueue));
 
         $jobQueue = new QueueJob([
             'id'           => '1234567890654321',

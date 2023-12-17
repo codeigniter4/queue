@@ -99,7 +99,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
         $queueJob->status = Status::RESERVED->value;
         $queueJob->syncOriginal();
 
-        $this->redis->hSet("queues:{$queue}::reserved", $queueJob->id, json_encode($queueJob));
+        $this->redis->hSet("queues:{$queue}::reserved", (string) $queueJob->id, json_encode($queueJob));
 
         return $queueJob;
     }
@@ -115,7 +115,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
         $queueJob->available_at = Time::now()->addSeconds($seconds)->timestamp;
 
         if ($result = (int) $this->redis->zAdd("queues:{$queueJob->queue}:{$queueJob->priority}", $queueJob->available_at->timestamp, json_encode($queueJob))) {
-            $this->redis->hDel("queues:{$queueJob->queue}::reserved", $queueJob->id);
+            $this->redis->hDel("queues:{$queueJob->queue}::reserved", (string) $queueJob->id);
         }
 
         return $result > 0;
@@ -130,7 +130,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
             $this->logFailed($queueJob, $err);
         }
 
-        return (bool) $this->redis->hDel("queues:{$queueJob->queue}::reserved", $queueJob->id);
+        return (bool) $this->redis->hDel("queues:{$queueJob->queue}::reserved", (string) $queueJob->id);
     }
 
     /**
@@ -145,7 +145,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
             $this->redis->lPush("queues:{$queueJob->queue}::done", json_encode($queueJob));
         }
 
-        return (bool) $this->redis->hDel("queues:{$queueJob->queue}::reserved", $queueJob->id);
+        return (bool) $this->redis->hDel("queues:{$queueJob->queue}::reserved", (string) $queueJob->id);
     }
 
     /**

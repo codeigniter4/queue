@@ -80,7 +80,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
         $queueJob->status = Status::RESERVED->value;
         $queueJob->syncOriginal();
 
-        $this->predis->hset("queues:{$queue}::reserved", $queueJob->id, json_encode($queueJob));
+        $this->predis->hset("queues:{$queue}::reserved", (string) $queueJob->id, json_encode($queueJob));
 
         return $queueJob;
     }
@@ -94,7 +94,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
         $queueJob->available_at = Time::now()->addSeconds($seconds)->timestamp;
 
         if ($result = $this->predis->zadd("queues:{$queueJob->queue}:{$queueJob->priority}", [json_encode($queueJob) => $queueJob->available_at->timestamp])) {
-            $this->predis->hdel("queues:{$queueJob->queue}::reserved", $queueJob->id);
+            $this->predis->hdel("queues:{$queueJob->queue}::reserved", [$queueJob->id]);
         }
 
         return $result > 0;
@@ -109,7 +109,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
             $this->logFailed($queueJob, $err);
         }
 
-        return (bool) $this->predis->hdel("queues:{$queueJob->queue}::reserved", $queueJob->id);
+        return (bool) $this->predis->hdel("queues:{$queueJob->queue}::reserved", [$queueJob->id]);
     }
 
     /**
@@ -122,7 +122,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
             $this->predis->lpush("queues:{$queueJob->queue}::done", [json_encode($queueJob)]);
         }
 
-        return (bool) $this->predis->hdel("queues:{$queueJob->queue}::reserved", $queueJob->id);
+        return (bool) $this->predis->hdel("queues:{$queueJob->queue}::reserved", [$queueJob->id]);
     }
 
     /**

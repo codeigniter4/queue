@@ -7,6 +7,8 @@ use CodeIgniter\Queue\Exceptions\QueueException;
 use CodeIgniter\Queue\Handlers\DatabaseHandler;
 use CodeIgniter\Queue\Handlers\PredisHandler;
 use CodeIgniter\Queue\Handlers\RedisHandler;
+use CodeIgniter\Queue\Interfaces\JobInterface;
+use CodeIgniter\Queue\Interfaces\QueueInterface;
 
 class Queue extends BaseConfig
 {
@@ -17,6 +19,8 @@ class Queue extends BaseConfig
 
     /**
      * Available handlers.
+     *
+     * @var array<string, class-string<QueueInterface>>
      */
     public array $handlers = [
         'database' => DatabaseHandler::class,
@@ -81,6 +85,8 @@ class Queue extends BaseConfig
 
     /**
      * Your jobs handlers.
+     *
+     * @var array<string, class-string<JobInterface>>
      */
     public array $jobHandlers = [];
 
@@ -95,6 +101,8 @@ class Queue extends BaseConfig
 
     /**
      * Resolve job class name.
+     *
+     * @return class-string<JobInterface>
      */
     public function resolveJobClass(string $name): string
     {
