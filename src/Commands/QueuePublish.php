@@ -18,7 +18,7 @@ class QueuePublish extends BaseCommand
      */
     public function run(array $params)
     {
-        $source = service('autoloader')->getNamespace('Michalsn\\CodeIgniterQueue')[0];
+        $source = service('autoloader')->getNamespace('CodeIgniter\\Queue')[0];
 
         $publisher = new Publisher($source, APPPATH);
 
@@ -34,8 +34,8 @@ class QueuePublish extends BaseCommand
 
         foreach ($publisher->getPublished() as $file) {
             $contents = file_get_contents($file);
-            $contents = str_replace('namespace Michalsn\\CodeIgniterQueue\\Config', 'namespace Config', $contents);
-            $contents = str_replace('use CodeIgniter\\Config\\BaseConfig', 'use Michalsn\\CodeIgniterQueue\\Config\\Queue as BaseQueue', $contents);
+            $contents = str_replace('namespace CodeIgniter\\Queue\\Config', 'namespace Config', $contents);
+            $contents = str_replace('use CodeIgniter\\Config\\BaseConfig', 'use CodeIgniter\\Queue\\Config\\Queue as BaseQueue', $contents);
             $contents = str_replace('class Queue extends BaseConfig', 'class Queue extends BaseQueue', $contents);
             $method   = <<<'EOT'
 
@@ -50,6 +50,8 @@ class QueuePublish extends BaseCommand
 
                     /**
                      * Resolve job class name.
+                     *
+                     * @return class-string<JobInterface>
                      */
                     public function resolveJobClass(string $name): string
                     {
