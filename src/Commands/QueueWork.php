@@ -80,7 +80,8 @@ class QueueWork extends BaseCommand
         $waiting       = false;
 
         // Read queue name from params
-        if (! $queue = array_shift($params)) {
+        $queue = array_shift($params);
+        if ($queue === null) {
             CLI::error('The queueName is not specified.');
 
             return EXIT_ERROR;

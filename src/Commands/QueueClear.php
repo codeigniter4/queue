@@ -50,7 +50,8 @@ class QueueClear extends BaseCommand
     public function run(array $params)
     {
         // Read params
-        if (! $queue = array_shift($params)) {
+        $queue = array_shift($params);
+        if ($queue === null) {
             CLI::error('The queueName is not specified.');
 
             return EXIT_ERROR;

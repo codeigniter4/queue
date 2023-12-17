@@ -50,7 +50,8 @@ class QueueForget extends BaseCommand
     public function run(array $params)
     {
         // Read params
-        if (! $id = array_shift($params)) {
+        $id = array_shift($params);
+        if ($id === null) {
             CLI::error('The ID of the failed job is not specified.');
 
             return EXIT_ERROR;
