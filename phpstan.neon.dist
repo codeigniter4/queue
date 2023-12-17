@@ -15,6 +15,14 @@ parameters:
 	            - src/Handlers/PredisHandler.php
 	    -
 	        message: '#Access to an undefined property CodeIgniter\\I18n\\Time::\$timestamp.#'
+	    -
+	        message: '#Call to an undefined method CodeIgniter\\Queue\\Models\\QueueJobFailedModel::affectedRows\(\).#'
+	        paths:
+	            - src/Handlers/BaseHandler.php
+	    -
+	        message: '#Call to an undefined method CodeIgniter\\Queue\\Models\\QueueJobFailedModel::truncate\(\).#'
+	        paths:
+	            - src/Handlers/BaseHandler.php
 	universalObjectCratesClasses:
 		- CodeIgniter\Entity
 		- CodeIgniter\Entity\Entity
