@@ -2,9 +2,9 @@
 
 namespace Tests\Support\Jobs;
 
+use CodeIgniter\Queue\BaseJob;
+use CodeIgniter\Queue\Interfaces\JobInterface;
 use Exception;
-use Michalsn\CodeIgniterQueue\BaseJob;
-use Michalsn\CodeIgniterQueue\Interfaces\JobInterface;
 
 class Failure extends BaseJob implements JobInterface
 {

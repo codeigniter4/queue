@@ -1,12 +1,12 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Commands;
+namespace CodeIgniter\Queue\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\Queue\Config\Queue as QueueConfig;
+use CodeIgniter\Queue\Entities\QueueJob;
 use Exception;
-use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
-use Michalsn\CodeIgniterQueue\Entities\QueueJob;
 use Throwable;
 
 class QueueWork extends BaseCommand

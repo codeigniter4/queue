@@ -9,30 +9,51 @@ theme:
     repo: fontawesome/brands/github
   palette:
     - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: indigo
-      accent: indigo
+      scheme: codeigniter
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - content.code.copy
+    - navigation.footer
+    - content.action.edit
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - search.share
 
 extra:
-  homepage: https://michalsn.github.io/codeigniter-queue
+  homepage: https://codeigniter.com
+  generator: false
 
   social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/michalsn/codeigniter-queue
+    - icon: material/github
+      link: https://github.com/codeigniter4/queue
       name: GitHub
+    - icon: material/twitter
+      link: https://twitter.com/CodeIgniterPhp
+      name: X
+    - icon: material/forum
+      link: https://forum.codeigniter.com
+      name: Forum Codeigniter
+    - icon: material/slack
+      link: https://join.slack.com/t/codeigniterchat/shared_invite/zt-244xrrslc-l_I69AJSi5y2a2RVN~xIdQ
+      name: Slack
 
-repo_url: https://github.com/michalsn/codeigniter-queue
+repo_url: https://github.com/codeigniter4/queue
 edit_uri: edit/develop/docs/
+copyright: Copyright &copy; 2023 CodeIgniter Foundation.
 
 markdown_extensions:
   - admonition
@@ -41,17 +62,19 @@ markdown_extensions:
       use_pygments: false
 
 extra_css:
-  - assets/github-dark-dimmed.css
+  - https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/styles/github.min.css
+  - assets/css/codeigniter.css
+  - assets/css/codeigniter_dark_mode.css
 
 extra_javascript:
-  - https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.6.0/build/highlight.min.js
-  - assets/hljs.js
+  - https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/highlight.min.js
+  - assets/js/hljs.js
 
 nav:
   - Home: index.md
   - Installation: installation.md
   - Configuration: configuration.md
-  - Basic usage: basic_usage.md
-  - Running queues: running_queues.md
+  - Basic usage: basic-usage.md
+  - Running queues: running-queues.md
   - Commands: commands.md
   - Troubleshooting: troubleshooting.md

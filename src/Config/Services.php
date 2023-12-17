@@ -1,11 +1,11 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Config;
+namespace CodeIgniter\Queue\Config;
 
 use CodeIgniter\Config\BaseService;
-use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
-use Michalsn\CodeIgniterQueue\Interfaces\QueueInterface;
-use Michalsn\CodeIgniterQueue\Queue;
+use CodeIgniter\Queue\Config\Queue as QueueConfig;
+use CodeIgniter\Queue\Interfaces\QueueInterface;
+use CodeIgniter\Queue\Queue;
 
 class Services extends BaseService
 {

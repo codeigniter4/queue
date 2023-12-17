@@ -1,14 +1,14 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Handlers;
+namespace CodeIgniter\Queue\Handlers;
 
 use CodeIgniter\Exceptions\CriticalError;
 use CodeIgniter\I18n\Time;
-use Michalsn\CodeIgniterQueue\Config\Queue as QueueConfig;
-use Michalsn\CodeIgniterQueue\Entities\QueueJob;
-use Michalsn\CodeIgniterQueue\Enums\Status;
-use Michalsn\CodeIgniterQueue\Interfaces\QueueInterface;
-use Michalsn\CodeIgniterQueue\Payload;
+use CodeIgniter\Queue\Config\Queue as QueueConfig;
+use CodeIgniter\Queue\Entities\QueueJob;
+use CodeIgniter\Queue\Enums\Status;
+use CodeIgniter\Queue\Interfaces\QueueInterface;
+use CodeIgniter\Queue\Payload;
 use Redis;
 use RedisException;
 use Throwable;

@@ -47,8 +47,8 @@ One of the most popular tasks delegated to a queue is sending email messages. Th
 namespace App\Jobs;
 
 use Exception;
-use Michalsn\CodeIgniterQueue\BaseJob;
-use Michalsn\CodeIgniterQueue\Interfaces\JobInterface;
+use CodeIgniter\Queue\BaseJob;
+use CodeIgniter\Queue\Interfaces\JobInterface;
 
 class Email extends BaseJob implements JobInterface
 {

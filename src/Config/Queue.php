@@ -1,12 +1,12 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Config;
+namespace CodeIgniter\Queue\Config;
 
 use CodeIgniter\Config\BaseConfig;
-use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
-use Michalsn\CodeIgniterQueue\Handlers\DatabaseHandler;
-use Michalsn\CodeIgniterQueue\Handlers\PredisHandler;
-use Michalsn\CodeIgniterQueue\Handlers\RedisHandler;
+use CodeIgniter\Queue\Exceptions\QueueException;
+use CodeIgniter\Queue\Handlers\DatabaseHandler;
+use CodeIgniter\Queue\Handlers\PredisHandler;
+use CodeIgniter\Queue\Handlers\RedisHandler;
 
 class Queue extends BaseConfig
 {

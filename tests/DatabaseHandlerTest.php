@@ -2,13 +2,13 @@
 
 namespace Tests;
 
+use CodeIgniter\Queue\Entities\QueueJob;
+use CodeIgniter\Queue\Enums\Status;
+use CodeIgniter\Queue\Exceptions\QueueException;
+use CodeIgniter\Queue\Handlers\DatabaseHandler;
+use CodeIgniter\Queue\Models\QueueJobFailedModel;
 use CodeIgniter\Test\ReflectionHelper;
 use Exception;
-use Michalsn\CodeIgniterQueue\Entities\QueueJob;
-use Michalsn\CodeIgniterQueue\Enums\Status;
-use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
-use Michalsn\CodeIgniterQueue\Handlers\DatabaseHandler;
-use Michalsn\CodeIgniterQueue\Models\QueueJobFailedModel;
 use ReflectionException;
 use Tests\Support\Config\Queue as QueueConfig;
 use Tests\Support\Database\Seeds\TestDatabaseQueueSeeder;

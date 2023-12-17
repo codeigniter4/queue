@@ -2,10 +2,10 @@
 
 namespace Tests\Support\Config;
 
-use Michalsn\CodeIgniterQueue\Config\Queue as BaseQueue;
-use Michalsn\CodeIgniterQueue\Handlers\DatabaseHandler;
-use Michalsn\CodeIgniterQueue\Handlers\PredisHandler;
-use Michalsn\CodeIgniterQueue\Handlers\RedisHandler;
+use CodeIgniter\Queue\Config\Queue as BaseQueue;
+use CodeIgniter\Queue\Handlers\DatabaseHandler;
+use CodeIgniter\Queue\Handlers\PredisHandler;
+use CodeIgniter\Queue\Handlers\RedisHandler;
 use Tests\Support\Jobs\Failure;
 use Tests\Support\Jobs\Success;
 

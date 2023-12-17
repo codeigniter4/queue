@@ -3,11 +3,11 @@
 namespace Tests;
 
 use CodeIgniter\I18n\Time;
+use CodeIgniter\Queue\Entities\QueueJob;
+use CodeIgniter\Queue\Exceptions\QueueException;
+use CodeIgniter\Queue\Handlers\RedisHandler;
 use CodeIgniter\Test\ReflectionHelper;
 use Exception;
-use Michalsn\CodeIgniterQueue\Entities\QueueJob;
-use Michalsn\CodeIgniterQueue\Exceptions\QueueException;
-use Michalsn\CodeIgniterQueue\Handlers\RedisHandler;
 use Tests\Support\Config\Queue as QueueConfig;
 use Tests\Support\Database\Seeds\TestRedisQueueSeeder;
 use Tests\Support\TestCase;

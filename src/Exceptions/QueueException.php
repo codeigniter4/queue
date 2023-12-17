@@ -1,6 +1,6 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Exceptions;
+namespace CodeIgniter\Queue\Exceptions;
 
 use RuntimeException;
 

@@ -2,8 +2,8 @@
 
 namespace Tests\Support\Jobs;
 
-use Michalsn\CodeIgniterQueue\BaseJob;
-use Michalsn\CodeIgniterQueue\Interfaces\JobInterface;
+use CodeIgniter\Queue\BaseJob;
+use CodeIgniter\Queue\Interfaces\JobInterface;
 
 class Success extends BaseJob implements JobInterface
 {

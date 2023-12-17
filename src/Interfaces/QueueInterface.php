@@ -1,8 +1,8 @@
 <?php
 
-namespace Michalsn\CodeIgniterQueue\Interfaces;
+namespace CodeIgniter\Queue\Interfaces;
 
-use Michalsn\CodeIgniterQueue\Entities\QueueJob;
+use CodeIgniter\Queue\Entities\QueueJob;
 use Throwable;
 
 interface QueueInterface
