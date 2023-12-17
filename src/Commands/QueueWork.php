@@ -200,7 +200,7 @@ class QueueWork extends BaseCommand
         ];
 
         // Options that, being defined, cannot be `true`
-        $keys = ['sleep', 'rest', 'maxJobs', 'maxTime', 'memory', 'priority', 'tries', 'retyAfter'];
+        $keys = ['sleep', 'rest', 'maxJobs', 'maxTime', 'memory', 'priority', 'tries', 'retryAfter'];
 
         foreach ($keys as $key) {
             if ($options[$key] === true) {
