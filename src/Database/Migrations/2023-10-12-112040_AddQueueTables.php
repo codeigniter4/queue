@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CodeIgniter\Queue\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
 class AddQueueTables extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $this->forge->addField([
             'id'           => ['type' => 'bigint', 'constraint' => 11, 'unsigned' => true, 'auto_increment' => true],
@@ -34,7 +36,7 @@ class AddQueueTables extends Migration
         $this->forge->createTable('queue_jobs_failed', true);
     }
 
-    public function down()
+    public function down(): void
     {
         $this->forge->dropTable('queue_jobs', true);
         $this->forge->dropTable('queue_jobs_failed', true);

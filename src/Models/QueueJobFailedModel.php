@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CodeIgniter\Queue\Models;
 
 use CodeIgniter\Model;
