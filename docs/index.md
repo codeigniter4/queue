@@ -25,3 +25,14 @@ Listen for queued jobs.
 * [Running queues](running-queues)
 * [Commands](commands.md)
 * [Troubleshooting](troubleshooting.md)
+
+### Acknowledgements
+
+Every open-source project depends on its contributors to be a success. The following users have
+contributed in one manner or another in making this project:
+
+<a href="https://github.com/codeigniter4/queue/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=codeigniter4/queue" alt="Contributors">
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).
