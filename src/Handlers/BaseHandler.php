@@ -19,6 +19,18 @@ abstract class BaseHandler
     protected QueueConfig $config;
     protected ?string $priority = null;
 
+    abstract public function push(string $queue, string $job, array $data): bool;
+
+    abstract public function pop(string $queue, array $priorities): ?QueueJob;
+
+    abstract public function later(QueueJob $queueJob, int $seconds): bool;
+
+    abstract public function failed(QueueJob $queueJob, Throwable $err, bool $keepJob): bool;
+
+    abstract public function done(QueueJob $queueJob, bool $keepJob): bool;
+
+    abstract public function clear(?string $queue = null): bool;
+
     /**
      * Set priority for job queue.
      */
