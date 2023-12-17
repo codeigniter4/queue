@@ -192,7 +192,7 @@ class QueueWork extends BaseCommand
 
             CLI::write('The processing of this job was successful', 'green');
         } catch (Throwable $err) {
-            if (isset($job) && ++$work->attempts < $tries ?? $job->getTries()) {
+            if (isset($job) && ++$work->attempts < ($tries ?? $job->getTries())) {
                 // Schedule for later
                 service('queue')->later($work, $retryAfter ?? $job->getRetryAfter());
             } else {
