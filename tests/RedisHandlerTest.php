@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests;
 
 use CodeIgniter\I18n\Time;
@@ -112,7 +114,7 @@ final class RedisHandlerTest extends TestCase
         $redis = self::getPrivateProperty($handler, 'redis');
         $this->assertSame(1_234_567_890_654_321, $result->id);
         $this->assertSame(0, $redis->zCard('queues:queue1:default'));
-        $this->assertTrue($redis->hExists('queues:queue1::reserved', $result->id));
+        $this->assertTrue($redis->hExists('queues:queue1::reserved', (string) $result->id));
     }
 
     public function testPopEmpty()
@@ -129,13 +131,13 @@ final class RedisHandlerTest extends TestCase
         $queueJob = $handler->pop('queue1', ['default']);
 
         $redis = self::getPrivateProperty($handler, 'redis');
-        $this->assertTrue($redis->hExists('queues:queue1::reserved', $queueJob->id));
+        $this->assertTrue($redis->hExists('queues:queue1::reserved', (string) $queueJob->id));
         $this->assertSame(0, $redis->zCard('queues:queue1:default'));
 
         $result = $handler->later($queueJob, 60);
 
         $this->assertTrue($result);
-        $this->assertFalse($redis->hExists('queues:queue1::reserved', $queueJob->id));
+        $this->assertFalse($redis->hExists('queues:queue1::reserved', (string) $queueJob->id));
         $this->assertSame(1, $redis->zCard('queues:queue1:default'));
     }
 
@@ -150,7 +152,7 @@ final class RedisHandlerTest extends TestCase
         $redis = self::getPrivateProperty($handler, 'redis');
 
         $this->assertTrue($result);
-        $this->assertFalse($redis->hExists('queues:queue1::reserved', $queueJob->id));
+        $this->assertFalse($redis->hExists('queues:queue1::reserved', (string) $queueJob->id));
         $this->assertSame(0, $redis->zCard('queues:queue1:default'));
 
         $this->seeInDatabase('queue_jobs_failed', [
@@ -171,7 +173,7 @@ final class RedisHandlerTest extends TestCase
         $redis = self::getPrivateProperty($handler, 'redis');
 
         $this->assertTrue($result);
-        $this->assertFalse($redis->hExists('queues:queue1::reserved', $queueJob->id));
+        $this->assertFalse($redis->hExists('queues:queue1::reserved', (string) $queueJob->id));
         $this->assertSame(0, $redis->zCard('queues:queue1:default'));
 
         $this->dontSeeInDatabase('queue_jobs_failed', [
@@ -191,7 +193,7 @@ final class RedisHandlerTest extends TestCase
         $redis = self::getPrivateProperty($handler, 'redis');
 
         $this->assertTrue($result);
-        $this->assertFalse($redis->hExists('queues:queue1::reserved', $queueJob->id));
+        $this->assertFalse($redis->hExists('queues:queue1::reserved', (string) $queueJob->id));
         $this->assertSame(1, $redis->lLen('queues:queue1::done'));
     }
 
@@ -206,7 +208,7 @@ final class RedisHandlerTest extends TestCase
         $result = $handler->done($queueJob, false);
 
         $this->assertTrue($result);
-        $this->assertFalse($redis->hExists('queues:queue1::reserved', $queueJob->id));
+        $this->assertFalse($redis->hExists('queues:queue1::reserved', (string) $queueJob->id));
         $this->assertSame(0, $redis->lLen('queues:queue1::done'));
     }
 
