@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CodeIgniter\Queue\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
@@ -13,10 +15,7 @@ class QueuePublish extends BaseCommand
     protected $name        = 'queue:publish';
     protected $description = 'Publish QueueJob config file into the current application.';
 
-    /**
-     * @return void
-     */
-    public function run(array $params)
+    public function run(array $params): void
     {
         $source = service('autoloader')->getNamespace('CodeIgniter\\Queue')[0];
 

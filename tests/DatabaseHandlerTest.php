@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests;
 
 use CodeIgniter\Queue\Entities\QueueJob;
@@ -31,13 +33,13 @@ final class DatabaseHandlerTest extends TestCase
         $this->config = config(QueueConfig::class);
     }
 
-    public function testDatabaseHandler()
+    public function testDatabaseHandler(): void
     {
         $handler = new DatabaseHandler($this->config);
         $this->assertInstanceOf(DatabaseHandler::class, $handler);
     }
 
-    public function testPriority()
+    public function testPriority(): void
     {
         $handler = new DatabaseHandler($this->config);
         $handler->setPriority('high');
@@ -45,7 +47,7 @@ final class DatabaseHandlerTest extends TestCase
         $this->assertSame('high', self::getPrivateProperty($handler, 'priority'));
     }
 
-    public function testPriorityNameException()
+    public function testPriorityNameException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('The priority name should consists only lowercase letters.');
@@ -54,7 +56,7 @@ final class DatabaseHandlerTest extends TestCase
         $handler->setPriority('high_:');
     }
 
-    public function testPriorityNameLengthException()
+    public function testPriorityNameLengthException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('The priority name is too long. It should be no longer than 64 letters.');
@@ -66,7 +68,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPush()
+    public function testPush(): void
     {
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->push('queue', 'success', ['key' => 'value']);
@@ -81,7 +83,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPushWithPriority()
+    public function testPushWithPriority(): void
     {
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->setPriority('high')->push('queue', 'success', ['key' => 'value']);
@@ -94,7 +96,7 @@ final class DatabaseHandlerTest extends TestCase
         ]);
     }
 
-    public function testPushAndPopWithPriority()
+    public function testPushAndPopWithPriority(): void
     {
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->push('queue', 'success', ['key1' => 'value1']);
@@ -129,7 +131,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPushException()
+    public function testPushException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('This job name is not defined in the $jobHandlers array.');
@@ -141,7 +143,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPushWithPriorityException()
+    public function testPushWithPriorityException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('This queue has incorrectly defined priority: "invalid" for the queue: "queue".');
@@ -153,7 +155,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPushWithIncorrectQueueFormatException()
+    public function testPushWithIncorrectQueueFormatException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('The queue name should consists only lowercase letters or numbers.');
@@ -165,7 +167,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPushWithTooLongQueueNameException()
+    public function testPushWithTooLongQueueNameException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('The queue name is too long. It should be no longer than 64 letters.');
@@ -177,7 +179,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPop()
+    public function testPop(): void
     {
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->pop('queue1', ['default']);
@@ -192,7 +194,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPopEmpty()
+    public function testPopEmpty(): void
     {
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->pop('queue123', ['default']);
@@ -203,7 +205,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testLater()
+    public function testLater(): void
     {
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -225,7 +227,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testFailedAndKeepJob()
+    public function testFailedAndKeepJob(): void
     {
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -244,7 +246,7 @@ final class DatabaseHandlerTest extends TestCase
         ]);
     }
 
-    public function testFailedAndDontKeepJob()
+    public function testFailedAndDontKeepJob(): void
     {
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -266,7 +268,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testDoneAndKeepJob()
+    public function testDoneAndKeepJob(): void
     {
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -283,7 +285,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testDoneAndDontKeepJob()
+    public function testDoneAndDontKeepJob(): void
     {
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -296,7 +298,7 @@ final class DatabaseHandlerTest extends TestCase
         ]);
     }
 
-    public function testClear()
+    public function testClear(): void
     {
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->clear('queue1');
@@ -311,7 +313,7 @@ final class DatabaseHandlerTest extends TestCase
         ]);
     }
 
-    public function testRetry()
+    public function testRetry(): void
     {
         $handler = new DatabaseHandler($this->config);
         $count   = $handler->retry(1, 'queue1');
@@ -328,7 +330,7 @@ final class DatabaseHandlerTest extends TestCase
         ]);
     }
 
-    public function testForget()
+    public function testForget(): void
     {
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->forget(1);
@@ -340,7 +342,7 @@ final class DatabaseHandlerTest extends TestCase
         ]);
     }
 
-    public function testForgetFalse()
+    public function testForgetFalse(): void
     {
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->forget(1111);
@@ -351,7 +353,7 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testFlush()
+    public function testFlush(): void
     {
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -373,7 +375,7 @@ final class DatabaseHandlerTest extends TestCase
         ]);
     }
 
-    public function testFlushAll()
+    public function testFlushAll(): void
     {
         $handler = new DatabaseHandler($this->config);
         $handler->flush(null, null);
@@ -382,7 +384,7 @@ final class DatabaseHandlerTest extends TestCase
         ]);
     }
 
-    public function testListFailed()
+    public function testListFailed(): void
     {
         $handler = new DatabaseHandler($this->config);
         $list    = $handler->listFailed('queue1');

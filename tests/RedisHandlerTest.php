@@ -31,13 +31,13 @@ final class RedisHandlerTest extends TestCase
         $this->config = config(QueueConfig::class);
     }
 
-    public function testRedisHandler()
+    public function testRedisHandler(): void
     {
         $handler = new RedisHandler($this->config);
         $this->assertInstanceOf(RedisHandler::class, $handler);
     }
 
-    public function testPriority()
+    public function testPriority(): void
     {
         $handler = new RedisHandler($this->config);
         $handler->setPriority('high');
@@ -45,7 +45,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertSame('high', self::getPrivateProperty($handler, 'priority'));
     }
 
-    public function testPriorityException()
+    public function testPriorityException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('The priority name should consists only lowercase letters.');
@@ -54,7 +54,7 @@ final class RedisHandlerTest extends TestCase
         $handler->setPriority('high_:');
     }
 
-    public function testPush()
+    public function testPush(): void
     {
         $handler = new RedisHandler($this->config);
         $result  = $handler->push('queue', 'success', ['key' => 'value']);
@@ -70,7 +70,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertSame(['key' => 'value'], $queueJob->payload['data']);
     }
 
-    public function testPushWithPriority()
+    public function testPushWithPriority(): void
     {
         $handler = new RedisHandler($this->config);
         $result  = $handler->setPriority('high')->push('queue', 'success', ['key' => 'value']);
@@ -86,7 +86,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertSame(['key' => 'value'], $queueJob->payload['data']);
     }
 
-    public function testPushException()
+    public function testPushException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('This job name is not defined in the $jobHandlers array.');
@@ -95,7 +95,7 @@ final class RedisHandlerTest extends TestCase
         $handler->push('queue', 'not-exists', ['key' => 'value']);
     }
 
-    public function testPushWithPriorityException()
+    public function testPushWithPriorityException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('This queue has incorrectly defined priority: "invalid" for the queue: "queue".');
@@ -104,7 +104,7 @@ final class RedisHandlerTest extends TestCase
         $handler->setPriority('invalid')->push('queue', 'success', ['key' => 'value']);
     }
 
-    public function testPop()
+    public function testPop(): void
     {
         $handler = new RedisHandler($this->config);
         $result  = $handler->pop('queue1', ['default']);
@@ -117,7 +117,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertTrue($redis->hExists('queues:queue1::reserved', (string) $result->id));
     }
 
-    public function testPopEmpty()
+    public function testPopEmpty(): void
     {
         $handler = new RedisHandler($this->config);
         $result  = $handler->pop('queue123', ['default']);
@@ -125,7 +125,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function testLater()
+    public function testLater(): void
     {
         $handler  = new RedisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -141,7 +141,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertSame(1, $redis->zCard('queues:queue1:default'));
     }
 
-    public function testFailedAndKeepJob()
+    public function testFailedAndKeepJob(): void
     {
         $handler  = new RedisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -162,7 +162,7 @@ final class RedisHandlerTest extends TestCase
         ]);
     }
 
-    public function testFailedAndDontKeepJob()
+    public function testFailedAndDontKeepJob(): void
     {
         $handler  = new RedisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -183,7 +183,7 @@ final class RedisHandlerTest extends TestCase
         ]);
     }
 
-    public function testDoneAndKeepJob()
+    public function testDoneAndKeepJob(): void
     {
         $handler  = new RedisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -197,7 +197,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertSame(1, $redis->lLen('queues:queue1::done'));
     }
 
-    public function testDoneAndDontKeepJob()
+    public function testDoneAndDontKeepJob(): void
     {
         $handler  = new RedisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -212,7 +212,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertSame(0, $redis->lLen('queues:queue1::done'));
     }
 
-    public function testClear()
+    public function testClear(): void
     {
         $handler = new RedisHandler($this->config);
         $result  = $handler->clear('queue1');
@@ -226,7 +226,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertTrue($result);
     }
 
-    public function testClearAll()
+    public function testClearAll(): void
     {
         $handler = new RedisHandler($this->config);
 
@@ -240,7 +240,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertTrue($result);
     }
 
-    public function testRetry()
+    public function testRetry(): void
     {
         $handler = new RedisHandler($this->config);
         $count   = $handler->retry(1, 'queue1');

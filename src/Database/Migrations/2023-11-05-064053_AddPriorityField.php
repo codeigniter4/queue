@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CodeIgniter\Queue\Database\Migrations;
 
 use CodeIgniter\Database\BaseConnection;
@@ -10,7 +12,7 @@ use CodeIgniter\Database\Migration;
  */
 class AddPriorityField extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $fields = [
             'priority' => [
@@ -40,7 +42,7 @@ class AddPriorityField extends Migration
         $this->forge->processIndexes('queue_jobs');
     }
 
-    public function down()
+    public function down(): void
     {
         // Ugly fix for dropping the correct index
         $keys = $this->db->getIndexData('queue_jobs');

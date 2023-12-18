@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace ThirdParty\queue\tests;
 
 use CodeIgniter\I18n\Time;
@@ -30,13 +32,13 @@ final class PredisHandlerTest extends TestCase
         $this->config = config(QueueConfig::class);
     }
 
-    public function testPredisHandler()
+    public function testPredisHandler(): void
     {
         $handler = new PredisHandler($this->config);
         $this->assertInstanceOf(PredisHandler::class, $handler);
     }
 
-    public function testPriority()
+    public function testPriority(): void
     {
         $handler = new PredisHandler($this->config);
         $handler->setPriority('high');
@@ -44,7 +46,7 @@ final class PredisHandlerTest extends TestCase
         $this->assertSame('high', self::getPrivateProperty($handler, 'priority'));
     }
 
-    public function testPriorityException()
+    public function testPriorityException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('The priority name should consists only lowercase letters.');
@@ -56,7 +58,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPush()
+    public function testPush(): void
     {
         $handler = new PredisHandler($this->config);
         $result  = $handler->push('queue', 'success', ['key' => 'value']);
@@ -75,7 +77,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPushWithPriority()
+    public function testPushWithPriority(): void
     {
         $handler = new PredisHandler($this->config);
         $result  = $handler->setPriority('high')->push('queue', 'success', ['key' => 'value']);
@@ -91,7 +93,7 @@ final class PredisHandlerTest extends TestCase
         $this->assertSame(['key' => 'value'], $queueJob->payload['data']);
     }
 
-    public function testPushException()
+    public function testPushException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('This job name is not defined in the $jobHandlers array.');
@@ -100,7 +102,7 @@ final class PredisHandlerTest extends TestCase
         $handler->push('queue', 'not-exists', ['key' => 'value']);
     }
 
-    public function testPushWithPriorityException()
+    public function testPushWithPriorityException(): void
     {
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('This queue has incorrectly defined priority: "invalid" for the queue: "queue".');
@@ -112,7 +114,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testPop()
+    public function testPop(): void
     {
         $handler = new PredisHandler($this->config);
         $result  = $handler->pop('queue1', ['default']);
@@ -125,7 +127,7 @@ final class PredisHandlerTest extends TestCase
         $this->assertSame(1, $predis->hexists('queues:queue1::reserved', $result->id));
     }
 
-    public function testPopEmpty()
+    public function testPopEmpty(): void
     {
         $handler = new PredisHandler($this->config);
         $result  = $handler->pop('queue123', ['default']);
@@ -136,7 +138,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testLater()
+    public function testLater(): void
     {
         $handler  = new PredisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -155,7 +157,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testFailedAndKeepJob()
+    public function testFailedAndKeepJob(): void
     {
         $handler  = new PredisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -179,7 +181,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testFailedAndDontKeepJob()
+    public function testFailedAndDontKeepJob(): void
     {
         $handler  = new PredisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -203,7 +205,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testDoneAndKeepJob()
+    public function testDoneAndKeepJob(): void
     {
         $handler  = new PredisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -220,7 +222,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testDoneAndDontKeepJob()
+    public function testDoneAndDontKeepJob(): void
     {
         $handler  = new PredisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -238,7 +240,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testClear()
+    public function testClear(): void
     {
         $handler = new PredisHandler($this->config);
         $result  = $handler->clear('queue1');
@@ -255,7 +257,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testClearAll()
+    public function testClearAll(): void
     {
         $handler = new PredisHandler($this->config);
         $result  = $handler->clear();
@@ -272,7 +274,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testRetry()
+    public function testRetry(): void
     {
         $handler = new PredisHandler($this->config);
         $count   = $handler->retry(1, 'queue1');
