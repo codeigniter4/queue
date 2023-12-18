@@ -9,6 +9,8 @@ parameters:
 	excludePaths:
 	ignoreErrors:
 	    -
+	        message: '#Call to method PHPUnit\\Framework\\Assert::assertInstanceOf\(\) with.#'
+	    -
 	        message: '#Call to deprecated function random_string\(\):#'
 	        paths:
 	            - src/Handlers/RedisHandler.php
@@ -33,3 +35,10 @@ parameters:
 		- APP_NAMESPACE
 		- CI_DEBUG
 		- ENVIRONMENT
+	strictRules:
+		allRules: false
+		disallowedLooseComparison: true
+		booleansInConditions: true
+		disallowedConstructs: true
+		matchingInheritedMethodNames: true
+
