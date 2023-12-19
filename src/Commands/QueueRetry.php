@@ -68,9 +68,7 @@ class QueueRetry extends BaseCommand
             return EXIT_ERROR;
         }
 
-        if ($id === 'all') {
-            $id = null;
-        }
+        $id = $id === 'all' ? null : (int) $id;
 
         $queue = $params['queue'] ?? CLI::getOption('queue');
 

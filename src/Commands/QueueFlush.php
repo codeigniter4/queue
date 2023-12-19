@@ -56,6 +56,10 @@ class QueueFlush extends BaseCommand
         $hours = $params['hours'] ?? CLI::getOption('hours');
         $queue = $params['queue'] ?? CLI::getOption('queue');
 
+        if ($hours !== null) {
+            $hours = (int) $hours;
+        }
+
         service('queue')->flush($hours, $queue);
 
         if ($hours === null) {
