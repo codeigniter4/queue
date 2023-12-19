@@ -161,7 +161,7 @@ class QueueWork extends BaseCommand
                 CLI::print('Starting a new job: ', 'cyan');
                 CLI::print($work->payload['job'], 'light_cyan');
                 CLI::print(', with ID: ', 'cyan');
-                CLI::print($work->id, 'light_cyan');
+                CLI::print((string) $work->id, 'light_cyan');
 
                 $this->handleWork($work, $config, $tries, $retryAfter);
 
