@@ -59,7 +59,7 @@ class QueueForget extends BaseCommand
             return EXIT_ERROR;
         }
 
-        if (service('queue')->forget($id)) {
+        if (service('queue')->forget((int) $id)) {
             CLI::write(sprintf('Failed job with ID %s has been removed.', $id), 'green');
         } else {
             CLI::write(sprintf('Could not find the failed job with ID %s', $id), 'red');
