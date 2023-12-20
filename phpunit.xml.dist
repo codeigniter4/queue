@@ -24,7 +24,8 @@
             <directory suffix=".php">./src/</directory>
         </include>
         <exclude>
-            <directory suffix=".php">./src/Commands</directory>
+            <directory suffix=".php">./src/Commands/Generators</directory>
+            <directory suffix=".php">./src/Commands/Utils</directory>
             <directory suffix=".php">./src/Config</directory>
         </exclude>
         <report>
