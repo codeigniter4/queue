@@ -5,13 +5,26 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\ReflectionHelper;
+use Exception;
 
 abstract class CLITestCase extends TestCase
 {
     use ReflectionHelper;
 
     private array $lines = [];
+
+    /**
+     * @throws Exception
+     */
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        // Reset the current time.
+        Time::setTestNow();
+    }
 
     protected function parseOutput(string $output): string
     {
