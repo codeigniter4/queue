@@ -56,7 +56,7 @@ class QueueFailed extends BaseCommand
         $queue = $params['queue'] ?? CLI::getOption('queue');
 
         /** @var QueueConfig $config */
-        $config = config('queue');
+        $config = config('Queue');
 
         $results = service('queue')->listFailed($queue);
 
@@ -64,7 +64,13 @@ class QueueFailed extends BaseCommand
         $tbody = [];
 
         foreach ($results as $result) {
-            $tbody[] = [$result->id, $result->connection, $result->queue, $this->getClassName($result->payload['job'], $config), $result->failed_at];
+            $tbody[] = [
+                $result->id,
+                $result->connection,
+                $result->queue,
+                $this->getClassName($result->payload['job'], $config),
+                $result->failed_at,
+            ];
         }
 
         CLI::table($tbody, $thead);

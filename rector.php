@@ -63,9 +63,10 @@ return static function (RectorConfig $rectorConfig): void {
         realpath(getcwd()) . '/vendor/codeigniter4/framework/system/Test/bootstrap.php',
     ]);
 
-    if (is_file(__DIR__ . '/phpstan.neon.dist')) {
-        $rectorConfig->phpstanConfig(__DIR__ . '/phpstan.neon.dist');
-    }
+    $rectorConfig->phpstanConfigs([
+        __DIR__ . '/phpstan.neon.dist',
+        __DIR__ . '/vendor/phpstan/phpstan-strict-rules/rules.neon',
+    ]);
 
     // Set the target version for refactoring
     $rectorConfig->phpVersion(PhpVersion::PHP_81);

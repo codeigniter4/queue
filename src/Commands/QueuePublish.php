@@ -13,7 +13,7 @@ class QueuePublish extends BaseCommand
 {
     protected $group       = 'Queue';
     protected $name        = 'queue:publish';
-    protected $description = 'Publish QueueJob config file into the current application.';
+    protected $description = 'Publish Queue config file into the current application.';
 
     public function run(array $params): void
     {

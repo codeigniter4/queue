@@ -72,7 +72,7 @@ class QueueStop extends BaseCommand
 
         cache()->save($cacheName, $startTime, MINUTE * 10);
 
-        CLI::write('QueueJob will be stopped after the current job finish', 'yellow');
+        CLI::write('Queue will be stopped after the current job finish', 'yellow');
 
         return EXIT_SUCCESS;
     }
