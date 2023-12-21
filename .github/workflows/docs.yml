@@ -5,8 +5,9 @@ on:
     branches:
       - develop
     paths:
-      - 'docs/*'
+      - 'docs/**/*'
       - 'mkdocs.yml'
+      - '.github/workflows/docs.yml'
 
 permissions:
   contents: write
