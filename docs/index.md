@@ -21,8 +21,8 @@ Listen for queued jobs.
 
 * [Installation](installation.md)
 * [Configuration](configuration.md)
-* [Basic usage](basic-usage)
-* [Running queues](running-queues)
+* [Basic usage](basic-usage.md)
+* [Running queues](running-queues.md)
 * [Commands](commands.md)
 * [Troubleshooting](troubleshooting.md)
 
