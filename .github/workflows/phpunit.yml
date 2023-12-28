@@ -37,7 +37,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     strategy:
       matrix:
-        php-versions: ['8.1', '8.2']
+        php-versions: ['8.1', '8.2', '8.3']
 
     steps:
       - name: Checkout
@@ -91,7 +91,7 @@ jobs:
   coveralls:
     needs: [main]
     name: Coveralls Finished
-    if: github.repository_owner == 'michalsn'
+    if: github.repository_owner == 'codeigniter4'
     runs-on: ubuntu-latest
     steps:
       - name: Upload Coveralls results
