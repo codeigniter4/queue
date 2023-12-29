@@ -44,7 +44,7 @@ class QueueWork extends BaseCommand
     /**
      * The Command's Arguments
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $arguments = [
         'queueName' => 'Name of the queue we will work with.',
@@ -53,7 +53,7 @@ class QueueWork extends BaseCommand
     /**
      * The Command's Options
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $options = [
         '-sleep'            => 'Wait time between the next check for available job when the queue is empty. Default value: 10 (seconds).',

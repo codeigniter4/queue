@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Exceptions\QueueException;
@@ -70,13 +71,16 @@ final class DatabaseHandlerTest extends TestCase
      */
     public function testPush(): void
     {
+        Time::setTestNow('2023-12-29 14:15:16');
+
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->push('queue', 'success', ['key' => 'value']);
 
         $this->assertTrue($result);
         $this->seeInDatabase('queue_jobs', [
-            'queue'   => 'queue',
-            'payload' => json_encode(['job' => 'success', 'data' => ['key' => 'value']]),
+            'queue'        => 'queue',
+            'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value']]),
+            'available_at' => '1703859316',
         ]);
     }
 
@@ -85,36 +89,43 @@ final class DatabaseHandlerTest extends TestCase
      */
     public function testPushWithPriority(): void
     {
+        Time::setTestNow('2023-12-29 14:15:16');
+
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->setPriority('high')->push('queue', 'success', ['key' => 'value']);
 
         $this->assertTrue($result);
         $this->seeInDatabase('queue_jobs', [
-            'queue'    => 'queue',
-            'payload'  => json_encode(['job' => 'success', 'data' => ['key' => 'value']]),
-            'priority' => 'high',
+            'queue'        => 'queue',
+            'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value']]),
+            'priority'     => 'high',
+            'available_at' => '1703859316',
         ]);
     }
 
     public function testPushAndPopWithPriority(): void
     {
+        Time::setTestNow('2023-12-29 14:15:16');
+
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->push('queue', 'success', ['key1' => 'value1']);
 
         $this->assertTrue($result);
         $this->seeInDatabase('queue_jobs', [
-            'queue'    => 'queue',
-            'payload'  => json_encode(['job' => 'success', 'data' => ['key1' => 'value1']]),
-            'priority' => 'low',
+            'queue'        => 'queue',
+            'payload'      => json_encode(['job' => 'success', 'data' => ['key1' => 'value1']]),
+            'priority'     => 'low',
+            'available_at' => '1703859316',
         ]);
 
         $result = $handler->setPriority('high')->push('queue', 'success', ['key2' => 'value2']);
 
         $this->assertTrue($result);
         $this->seeInDatabase('queue_jobs', [
-            'queue'    => 'queue',
-            'payload'  => json_encode(['job' => 'success', 'data' => ['key2' => 'value2']]),
-            'priority' => 'high',
+            'queue'        => 'queue',
+            'payload'      => json_encode(['job' => 'success', 'data' => ['key2' => 'value2']]),
+            'priority'     => 'high',
+            'available_at' => '1703859316',
         ]);
 
         $result = $handler->pop('queue', ['high', 'low']);
@@ -207,6 +218,8 @@ final class DatabaseHandlerTest extends TestCase
      */
     public function testLater(): void
     {
+        Time::setTestNow('2023-12-29 14:15:16');
+
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
 
@@ -219,8 +232,9 @@ final class DatabaseHandlerTest extends TestCase
 
         $this->assertTrue($result);
         $this->seeInDatabase('queue_jobs', [
-            'id'     => 2,
-            'status' => Status::PENDING->value,
+            'id'           => 2,
+            'status'       => Status::PENDING->value,
+            'available_at' => Time::now()->addSeconds(60)->timestamp,
         ]);
     }
 
@@ -229,6 +243,8 @@ final class DatabaseHandlerTest extends TestCase
      */
     public function testFailedAndKeepJob(): void
     {
+        Time::setTestNow('2023-12-29 14:15:16');
+
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
 
@@ -243,6 +259,7 @@ final class DatabaseHandlerTest extends TestCase
             'id'         => 2,
             'connection' => 'database',
             'queue'      => 'queue1',
+            'failed_at'  => '1703859316',
         ]);
     }
 

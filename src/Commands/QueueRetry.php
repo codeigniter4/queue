@@ -40,7 +40,7 @@ class QueueRetry extends BaseCommand
     /**
      * The Command's Arguments
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $arguments = [
         'id' => 'ID of the failed job or "all" for all failed jobs.',
@@ -49,7 +49,7 @@ class QueueRetry extends BaseCommand
     /**
      * The Command's Options
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $options = [
         '-queue' => 'Queue name.',

@@ -16,8 +16,6 @@ parameters:
 	            - src/Handlers/RedisHandler.php
 	            - src/Handlers/PredisHandler.php
 	    -
-	        message: '#Access to an undefined property CodeIgniter\\I18n\\Time::\$timestamp.#'
-	    -
 	        message: '#Call to an undefined method CodeIgniter\\Queue\\Models\\QueueJobFailedModel::affectedRows\(\).#'
 	        paths:
 	            - src/Handlers/BaseHandler.php

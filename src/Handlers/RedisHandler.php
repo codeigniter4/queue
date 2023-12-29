@@ -62,7 +62,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
             'priority'     => $this->priority,
             'status'       => Status::PENDING->value,
             'attempts'     => 0,
-            'available_at' => Time::now()->timestamp,
+            'available_at' => Time::now(),
         ]);
 
         $result = (int) $this->redis->zAdd("queues:{$queue}:{$this->priority}", Time::now()->timestamp, json_encode($queueJob));
@@ -83,7 +83,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
         $now   = Time::now()->timestamp;
 
         foreach ($priorities as $priority) {
-            if ($tasks = $this->redis->zRangeByScore("queues:{$queue}:{$priority}", '-inf', $now, ['limit' => [0, 1]])) {
+            if ($tasks = $this->redis->zRangeByScore("queues:{$queue}:{$priority}", '-inf', (string) $now, ['limit' => [0, 1]])) {
                 if ($this->redis->zRem("queues:{$queue}:{$priority}", ...$tasks)) {
                     break;
                 }
@@ -114,7 +114,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
     public function later(QueueJob $queueJob, int $seconds): bool
     {
         $queueJob->status       = Status::PENDING->value;
-        $queueJob->available_at = Time::now()->addSeconds($seconds)->timestamp;
+        $queueJob->available_at = Time::now()->addSeconds($seconds);
 
         $result = (int) $this->redis->zAdd(
             "queues:{$queueJob->queue}:{$queueJob->priority}",
