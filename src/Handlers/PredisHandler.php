@@ -45,7 +45,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
             'priority'     => $this->priority,
             'status'       => Status::PENDING->value,
             'attempts'     => 0,
-            'available_at' => Time::now()->timestamp,
+            'available_at' => Time::now(),
         ]);
 
         $result = $this->predis->zadd("queues:{$queue}:{$this->priority}", [json_encode($queueJob) => Time::now()->timestamp]);
@@ -100,7 +100,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
     public function later(QueueJob $queueJob, int $seconds): bool
     {
         $queueJob->status       = Status::PENDING->value;
-        $queueJob->available_at = Time::now()->addSeconds($seconds)->timestamp;
+        $queueJob->available_at = Time::now()->addSeconds($seconds);
 
         $result = $this->predis->zadd(
             "queues:{$queueJob->queue}:{$queueJob->priority}",

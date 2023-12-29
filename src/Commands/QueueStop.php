@@ -40,7 +40,7 @@ class QueueStop extends BaseCommand
     /**
      * The Command's Arguments
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $arguments = [
         'queueName' => 'Name of the queue we will work with.',
@@ -49,7 +49,7 @@ class QueueStop extends BaseCommand
     /**
      * The Command's Options
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $options = [
     ];

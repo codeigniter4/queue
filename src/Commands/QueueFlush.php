@@ -40,7 +40,7 @@ class QueueFlush extends BaseCommand
     /**
      * The Command's Options
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $options = [
         '-hours' => 'Number of hours.',

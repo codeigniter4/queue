@@ -41,7 +41,7 @@ class QueueFailed extends BaseCommand
     /**
      * The Command's Options
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $options = [
         '-queue' => 'Queue name.',

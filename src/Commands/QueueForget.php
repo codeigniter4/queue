@@ -40,7 +40,7 @@ class QueueForget extends BaseCommand
     /**
      * The Command's Arguments
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $arguments = [
         'id' => 'ID of the failed job.',
