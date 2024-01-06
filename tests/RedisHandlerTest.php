@@ -166,7 +166,7 @@ final class RedisHandlerTest extends TestCase
 
         $this->seeInDatabase('queue_jobs_failed', [
             'id'         => 2,
-            'connection' => 'database',
+            'connection' => 'redis',
             'queue'      => 'queue1',
         ]);
     }
@@ -187,7 +187,7 @@ final class RedisHandlerTest extends TestCase
 
         $this->dontSeeInDatabase('queue_jobs_failed', [
             'id'         => 2,
-            'connection' => 'database',
+            'connection' => 'redis',
             'queue'      => 'queue1',
         ]);
     }
