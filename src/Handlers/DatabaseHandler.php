@@ -34,6 +34,14 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
     }
 
     /**
+     * Name of the handler.
+     */
+    public function name(): string
+    {
+        return 'database';
+    }
+
+    /**
      * Add job to the queue.
      *
      * @throws ReflectionException

@@ -54,6 +54,14 @@ class RedisHandler extends BaseHandler implements QueueInterface
     }
 
     /**
+     * Name of the handler.
+     */
+    public function name(): string
+    {
+        return 'redis';
+    }
+
+    /**
      * Add job to the queue.
      *
      * @throws RedisException

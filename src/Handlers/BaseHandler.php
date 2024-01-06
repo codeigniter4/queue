@@ -30,6 +30,8 @@ abstract class BaseHandler
     protected QueueConfig $config;
     protected ?string $priority = null;
 
+    abstract public function name(): string;
+
     abstract public function push(string $queue, string $job, array $data): bool;
 
     abstract public function pop(string $queue, array $priorities): ?QueueJob;
@@ -144,7 +146,7 @@ abstract class BaseHandler
             "file: {$err->getFile()}:{$err->getLine()}";
 
         $queueJobFailed = new QueueJobFailed([
-            'connection' => 'database',
+            'connection' => $this->name(),
             'queue'      => $queueJob->queue,
             'payload'    => $queueJob->payload,
             'priority'   => $queueJob->priority,
