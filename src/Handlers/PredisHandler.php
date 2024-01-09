@@ -39,6 +39,14 @@ class PredisHandler extends BaseHandler implements QueueInterface
     }
 
     /**
+     * Name of the handler.
+     */
+    public function name(): string
+    {
+        return 'predis';
+    }
+
+    /**
      * Add job to the queue.
      */
     public function push(string $queue, string $job, array $data): bool

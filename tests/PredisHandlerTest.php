@@ -182,7 +182,7 @@ final class PredisHandlerTest extends TestCase
 
         $this->seeInDatabase('queue_jobs_failed', [
             'id'         => 2,
-            'connection' => 'database',
+            'connection' => 'predis',
             'queue'      => 'queue1',
         ]);
     }
@@ -206,7 +206,7 @@ final class PredisHandlerTest extends TestCase
 
         $this->dontSeeInDatabase('queue_jobs_failed', [
             'id'         => 2,
-            'connection' => 'database',
+            'connection' => 'predis',
             'queue'      => 'queue1',
         ]);
     }
