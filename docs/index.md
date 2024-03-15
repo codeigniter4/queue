@@ -14,8 +14,12 @@ Listen for queued jobs.
 
 ### Requirements
 
-![PHP](https://img.shields.io/badge/PHP-%5E8.1-red)
-![CodeIgniter](https://img.shields.io/badge/CodeIgniter-%5E4.3-red)
+- PHP 8.1+
+- CodeIgniter 4.3+
+
+If you use `database` handler:
+- MySQL 8.0.1+
+- MariaDB 10.6+
 
 ### Table of Contents
 
