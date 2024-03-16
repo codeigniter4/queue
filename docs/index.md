@@ -20,6 +20,9 @@ Listen for queued jobs.
 If you use `database` handler:
 - MySQL 8.0.1+
 - MariaDB 10.6+
+- PostgreSQL 9.5+
+- SQL Server 2012+
+- Oracle 12.1+
 
 ### Table of Contents
 
