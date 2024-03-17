@@ -23,6 +23,7 @@ If you use `database` handler:
 - PostgreSQL 9.5+
 - SQL Server 2012+
 - Oracle 12.1+
+- SQLite3
 
 ### Table of Contents
 
