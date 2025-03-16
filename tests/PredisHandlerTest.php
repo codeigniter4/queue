@@ -81,6 +81,7 @@ final class PredisHandlerTest extends TestCase
         $queueJob = new QueueJob(json_decode((string) $task[0], true));
         $this->assertSame('success', $queueJob->payload['job']);
         $this->assertSame(['key' => 'value'], $queueJob->payload['data']);
+        $this->assertSame([], $queueJob->payload['metadata']);
     }
 
     /**
@@ -100,6 +101,7 @@ final class PredisHandlerTest extends TestCase
         $queueJob = new QueueJob(json_decode((string) $task[0], true));
         $this->assertSame('success', $queueJob->payload['job']);
         $this->assertSame(['key' => 'value'], $queueJob->payload['data']);
+        $this->assertSame([], $queueJob->payload['metadata']);
     }
 
     /**
@@ -121,6 +123,92 @@ final class PredisHandlerTest extends TestCase
         $queueJob = new QueueJob(json_decode((string) $task[0], true));
         $this->assertSame('success', $queueJob->payload['job']);
         $this->assertSame(['key' => 'value'], $queueJob->payload['data']);
+        $this->assertSame([], $queueJob->payload['metadata']);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testChain(): void
+    {
+        Time::setTestNow('2023-12-29 14:15:16');
+
+        $handler = new PredisHandler($this->config);
+        $result  = $handler->chain(static function ($chain): void {
+            $chain
+                ->push('queue', 'success', ['key1' => 'value1'])
+                ->push('queue', 'success', ['key2' => 'value2']);
+        });
+
+        $this->assertTrue($result);
+
+        $predis = self::getPrivateProperty($handler, 'predis');
+        $this->assertSame(1, $predis->zcard('queues:queue:low'));
+
+        $task     = $predis->zrangebyscore('queues:queue:low', '-inf', Time::now()->timestamp, ['limit' => [0, 1]]);
+        $queueJob = new QueueJob(json_decode((string) $task[0], true));
+
+        $this->assertSame('success', $queueJob->payload['job']);
+        $this->assertSame(['key1' => 'value1'], $queueJob->payload['data']);
+        $this->assertArrayHasKey('metadata', $queueJob->payload);
+        $this->assertArrayHasKey('queue', $queueJob->payload['metadata']);
+        $this->assertSame('queue', $queueJob->payload['metadata']['queue']);
+        $this->assertArrayHasKey('chainedJobs', $queueJob->payload['metadata']);
+
+        $chainedJobs = $queueJob->payload['metadata']['chainedJobs'];
+        $this->assertCount(1, $chainedJobs);
+        $this->assertSame('success', $chainedJobs[0]['job']);
+        $this->assertSame(['key2' => 'value2'], $chainedJobs[0]['data']);
+        $this->assertSame('queue', $chainedJobs[0]['metadata']['queue']);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testChainWithPriorityAndDelay(): void
+    {
+        Time::setTestNow('2023-12-29 14:15:16');
+
+        $handler = new PredisHandler($this->config);
+        $result  = $handler->chain(static function ($chain): void {
+            $chain
+                ->push('queue', 'success', ['key1' => 'value1'])
+                ->setPriority('high')
+                ->setDelay(60)
+                ->push('queue', 'success', ['key2' => 'value2'])
+                ->setPriority('low')
+                ->setDelay(120);
+        });
+
+        $this->assertTrue($result);
+
+        $predis = self::getPrivateProperty($handler, 'predis');
+        // Should be in high priority queue
+        $this->assertSame(1, $predis->zcard('queues:queue:high'));
+
+        // Check with delay
+        $task     = $predis->zrangebyscore('queues:queue:high', '-inf', Time::now()->addSeconds(61)->timestamp, ['limit' => [0, 1]]);
+        $queueJob = new QueueJob(json_decode((string) $task[0], true));
+
+        $this->assertSame('success', $queueJob->payload['job']);
+        $this->assertSame(['key1' => 'value1'], $queueJob->payload['data']);
+        $this->assertArrayHasKey('metadata', $queueJob->payload);
+
+        // Check metadata
+        $metadata = $queueJob->payload['metadata'];
+        $this->assertSame('queue', $metadata['queue']);
+        $this->assertSame('high', $metadata['priority']);
+        $this->assertSame(60, $metadata['delay']);
+
+        // Check a chained job with its priority and delay
+        $this->assertArrayHasKey('chainedJobs', $metadata);
+        $chainedJobs = $metadata['chainedJobs'];
+        $this->assertCount(1, $chainedJobs);
+        $this->assertSame('success', $chainedJobs[0]['job']);
+        $this->assertSame(['key2' => 'value2'], $chainedJobs[0]['data']);
+        $this->assertSame('queue', $chainedJobs[0]['metadata']['queue']);
+        $this->assertSame('low', $chainedJobs[0]['metadata']['priority']);
+        $this->assertSame(120, $chainedJobs[0]['metadata']['delay']);
     }
 
     public function testPushException(): void

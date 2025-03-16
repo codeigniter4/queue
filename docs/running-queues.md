@@ -79,6 +79,40 @@ Note that there is no guarantee that the job will run exactly in 5 minutes. If m
 
 We can also combine delayed jobs with priorities.
 
+### Chained jobs
+
+We can create sequences of jobs that run in a specific order. Each job in the chain will be executed after the previous job has completed successfully.
+
+```php
+service('queue')->chain(function($chain) {
+    $chain
+        ->push('reports', 'generate-report', ['userId' => 123])
+            ->setPriority('high') // optional
+        ->push('emails', 'email', ['message' => 'Email message goes here', 'userId' => 123])
+            ->setDelay(30); // optional
+});
+```
+
+As you may notice, we can use the same options as in regular `push()` - we can set priority and delay, which are optional settings.
+
+#### Important Differences from Regular `push()`
+
+When using the `chain()` method, there are a few important differences compared to the regular `push()` method:
+
+1. **Method Order**: Unlike the regular `push()` method where you set the priority and delay before pushing the job, in a chain you must set these properties after calling `push()` for each job:
+
+    ```php
+    // Regular push() - priority set before pushing
+    service('queue')->setPriority('high')->push('queue', 'job', []);
+
+    // Chain push() - priority set after pushing
+    service('queue')->chain(function($chain) {
+        $chain->push('queue', 'job', [])->setPriority('high');
+    });
+    ```
+
+2. **Configuration Scope**: Each configuration (priority, delay) only applies to the job that was just added to the chain.
+
 ### Running many instances of the same queue
 
 As mentioned above, sometimes we may want to have multiple instances of the same command running at the same time. The queue is safe to use in that scenario with all databases as long as you keep the `skipLocked` to `true` in the config file. Only for SQLite3 driver, this setting is not relevant as it provides atomicity without the need for explicit concurrency control.

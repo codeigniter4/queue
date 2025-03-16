@@ -13,12 +13,16 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Queue\Handlers;
 
+use Closure;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Entities\QueueJobFailed;
 use CodeIgniter\Queue\Exceptions\QueueException;
 use CodeIgniter\Queue\Models\QueueJobFailedModel;
+use CodeIgniter\Queue\Payloads\ChainBuilder;
+use CodeIgniter\Queue\Payloads\PayloadMetadata;
+use CodeIgniter\Queue\Traits\HasQueueValidation;
 use ReflectionException;
 use Throwable;
 
@@ -27,13 +31,15 @@ use Throwable;
  */
 abstract class BaseHandler
 {
+    use HasQueueValidation;
+
     protected QueueConfig $config;
     protected ?string $priority = null;
     protected ?int $delay       = null;
 
     abstract public function name(): string;
 
-    abstract public function push(string $queue, string $job, array $data): bool;
+    abstract public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): bool;
 
     abstract public function pop(string $queue, array $priorities): ?QueueJob;
 
@@ -44,38 +50,6 @@ abstract class BaseHandler
     abstract public function done(QueueJob $queueJob, bool $keepJob): bool;
 
     abstract public function clear(?string $queue = null): bool;
-
-    /**
-     * Set priority for job queue.
-     */
-    public function setPriority(string $priority): static
-    {
-        if (! preg_match('/^[a-z_-]+$/', $priority)) {
-            throw QueueException::forIncorrectPriorityFormat();
-        }
-
-        if (strlen($priority) > 64) {
-            throw QueueException::forTooLongPriorityName();
-        }
-
-        $this->priority = $priority;
-
-        return $this;
-    }
-
-    /**
-     * Set delay for job queue (in seconds).
-     */
-    public function setDelay(int $delay): static
-    {
-        if ($delay < 0) {
-            throw QueueException::forIncorrectDelayValue();
-        }
-
-        $this->delay = $delay;
-
-        return $this;
-    }
 
     /**
      * Retry failed job.
@@ -104,7 +78,7 @@ abstract class BaseHandler
     }
 
     /**
-     * Delete failed job by ID.
+     * Delete a failed job by ID.
      */
     public function forget(int $id): bool
     {
@@ -148,6 +122,43 @@ abstract class BaseHandler
             )
             ->orderBy('failed_at', 'desc')
             ->findAll();
+    }
+
+    /**
+     * Set delay for job queue (in seconds).
+     */
+    public function setDelay(int $delay): static
+    {
+        $this->validateDelay($delay);
+
+        $this->delay = $delay;
+
+        return $this;
+    }
+
+    /**
+     * Set priority for job queue.
+     */
+    public function setPriority(string $priority): static
+    {
+        $this->validatePriority($priority);
+
+        $this->priority = $priority;
+
+        return $this;
+    }
+
+    /**
+     * Create a job chain on the specified queue
+     *
+     * @param Closure $callback Chain definition callback
+     */
+    public function chain(Closure $callback): bool
+    {
+        $chainBuilder = new ChainBuilder($this);
+        $callback($chainBuilder);
+
+        return $chainBuilder->dispatch();
     }
 
     /**

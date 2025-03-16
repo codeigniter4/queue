@@ -20,7 +20,8 @@ use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Interfaces\QueueInterface;
-use CodeIgniter\Queue\Payload;
+use CodeIgniter\Queue\Payloads\Payload;
+use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use Redis;
 use RedisException;
 use Throwable;
@@ -75,7 +76,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
      *
      * @throws RedisException
      */
-    public function push(string $queue, string $job, array $data): bool
+    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): bool
     {
         $this->validateJobAndPriority($queue, $job);
 
@@ -86,7 +87,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
         $queueJob = new QueueJob([
             'id'           => random_string('numeric', 16),
             'queue'        => $queue,
-            'payload'      => new Payload($job, $data),
+            'payload'      => new Payload($job, $data, $metadata),
             'priority'     => $this->priority,
             'status'       => Status::PENDING->value,
             'attempts'     => 0,

@@ -111,4 +111,48 @@ final class QueueWorkTest extends CLITestCase
         $this->assertSame('The processing of this job was successful', $this->getLine(4));
         $this->assertSame('No job available. Stopping.', $this->getLine(7));
     }
+
+    public function testRunWithChainedQueueSucceed(): void
+    {
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        fake(QueueJobModel::class, [
+            'connection' => 'database',
+            'queue'      => 'test',
+            'payload'    => [
+                'job'      => 'success',
+                'data'     => ['key' => 'value'],
+                'metadata' => [
+                    'queue'       => 'queue',
+                    'chainedJobs' => [
+                        [
+                            'job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => [
+                                'queue'    => 'queue',
+                                'priority' => 'high',
+                                'delay'    => 10,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'priority'     => 'default',
+            'status'       => 0,
+            'attempts'     => 0,
+            'available_at' => 1_702_977_074,
+        ]);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertSame('Listening for the jobs with the queue: test', $this->getLine(0));
+        $this->assertSame('Starting a new job: success, with ID: 1', $this->getLine(3));
+        $this->assertSame('The processing of this job was successful', $this->getLine(4));
+        $this->assertSame('Chained job: success has been placed in the queue: queue', $this->getLine(5));
+        $this->assertSame('No job available. Stopping.', $this->getLine(8));
+    }
 }

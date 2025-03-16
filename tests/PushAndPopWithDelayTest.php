@@ -73,20 +73,20 @@ final class PushAndPopWithDelayTest extends TestCase
         if ($name === 'database') {
             $this->seeInDatabase('queue_jobs', [
                 'queue'        => 'queue-delay',
-                'payload'      => json_encode(['job' => 'success', 'data' => ['key1' => 'value1']]),
+                'payload'      => json_encode(['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []]),
                 'available_at' => 1703859376,
             ]);
 
             $this->seeInDatabase('queue_jobs', [
                 'queue'        => 'queue-delay',
-                'payload'      => json_encode(['job' => 'success', 'data' => ['key2' => 'value2']]),
+                'payload'      => json_encode(['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []]),
                 'available_at' => 1703859316,
             ]);
         }
 
         $result = $handler->pop('queue-delay', ['default']);
         $this->assertInstanceOf(QueueJob::class, $result);
-        $payload = ['job' => 'success', 'data' => ['key2' => 'value2']];
+        $payload = ['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []];
         $this->assertSame($payload, $result->payload);
 
         $result = $handler->pop('queue-delay', ['default']);
@@ -97,7 +97,7 @@ final class PushAndPopWithDelayTest extends TestCase
 
         $result = $handler->pop('queue-delay', ['default']);
         $this->assertInstanceOf(QueueJob::class, $result);
-        $payload = ['job' => 'success', 'data' => ['key1' => 'value1']];
+        $payload = ['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []];
         $this->assertSame($payload, $result->payload);
     }
 }
