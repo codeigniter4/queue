@@ -13,22 +13,15 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Queue\Commands;
 
-use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
+use CodeIgniter\Queue\Exceptions\QueueException;
 use Exception;
 use Throwable;
 
-class QueueWork extends BaseCommand
+class QueueWork extends QueueCommand
 {
-    /**
-     * The Command's Group
-     *
-     * @var string
-     */
-    protected $group = 'Queue';
-
     /**
      * The Command's Name
      *
@@ -73,6 +66,7 @@ class QueueWork extends BaseCommand
         '-priority'         => 'The priority for the jobs from the queue (comma separated). If not provided explicit, will follow the priorities defined in the config via $queuePriorities for the given queue. Disabled by default.',
         '-tries'            => 'The number of attempts after which the job will be considered as failed. Overrides settings from the Job class. Disabled by default.',
         '-retry-after'      => 'The number of seconds after which the job is to be restarted in case of failure. Overrides settings from the Job class. Disabled by default.',
+        '-config'           => 'The alternative config file to use. Default value relies on config(\'Queue\')',
         '--stop-when-empty' => 'Stop when the queue is empty.',
     ];
 
@@ -85,8 +79,16 @@ class QueueWork extends BaseCommand
     {
         set_time_limit(0);
 
-        /** @var QueueConfig $config */
-        $config        = config('Queue');
+        try {
+            /** @var QueueConfig $config */
+            $config = $this->handleConfig($params);
+        } catch (QueueException $e) {
+            CLI::error($e->getMessage());
+
+            return EXIT_ERROR;
+        }
+
+        $configHash    = $this->getConfigHash($config);
         $stopWhenEmpty = false;
         $waiting       = false;
 
@@ -136,7 +138,7 @@ class QueueWork extends BaseCommand
         $priority = array_map('trim', explode(',', (string) $priority));
 
         while (true) {
-            $work = service('queue')->pop($queue, $priority);
+            $work = service('queue', $config)->pop($queue, $priority);
 
             if ($work === null) {
                 if ($stopWhenEmpty) {
@@ -156,7 +158,7 @@ class QueueWork extends BaseCommand
                     return EXIT_SUCCESS;
                 }
 
-                if ($this->checkStop($queue, $startTime)) {
+                if ($this->checkStop($queue, $configHash, $startTime)) {
                     return EXIT_SUCCESS;
                 }
 
@@ -178,7 +180,7 @@ class QueueWork extends BaseCommand
                     return EXIT_SUCCESS;
                 }
 
-                if ($this->checkStop($queue, $startTime)) {
+                if ($this->checkStop($queue, $configHash, $startTime)) {
                     return EXIT_SUCCESS;
                 }
 
@@ -244,7 +246,7 @@ class QueueWork extends BaseCommand
             $job->process();
 
             // Mark as done
-            service('queue')->done($work, $config->keepDoneJobs);
+            service('queue', $config)->done($work, $config->keepDoneJobs);
 
             CLI::write('The processing of this job was successful', 'green');
         } catch (Throwable $err) {
@@ -295,9 +297,9 @@ class QueueWork extends BaseCommand
         return false;
     }
 
-    private function checkStop(string $queue, float $startTime): bool
+    private function checkStop(string $queue, string $configHash, float $startTime): bool
     {
-        $time = cache()->get(sprintf('queue-%s-stop', $queue));
+        $time = cache()->get(sprintf('queue-%s-%s-stop', $queue, $configHash));
 
         if ($time === null) {
             return false;

@@ -46,4 +46,30 @@ final class QueueStopTest extends CLITestCase
 
         $this->assertSame('Queue will be stopped after the current job finish', $output);
     }
+
+    public function testRunWithValidConfig(): void
+    {
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:stop test -config Queue'));
+        $output = $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertSame('Queue will be stopped after the current job finish', $output);
+    }
+
+    public function testRunWithInvalidConfig(): void
+    {
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addErrorFilter();
+
+        $this->assertNotFalse(command('queue:stop test -config Acme\\Config\\Queue'));
+        $output = $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeErrorFilter();
+
+        $this->assertStringContainsString('The specified config file does not exist.', $output);
+    }
 }

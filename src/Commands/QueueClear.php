@@ -13,18 +13,12 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Queue\Commands;
 
-use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\Queue\Config\Queue as QueueConfig;
+use CodeIgniter\Queue\Exceptions\QueueException;
 
-class QueueClear extends BaseCommand
+class QueueClear extends QueueCommand
 {
-    /**
-     * The Command's Group
-     *
-     * @var string
-     */
-    protected $group = 'Queue';
-
     /**
      * The Command's Name
      *
@@ -56,6 +50,15 @@ class QueueClear extends BaseCommand
     ];
 
     /**
+     * The Command's Options
+     *
+     * @var array<string, string>
+     */
+    protected $options = [
+        '-config' => 'The alternative config file to use. Default value: relies on config(\'Queue\')',
+    ];
+
+    /**
      * Actually execute a command.
      */
     public function run(array $params)
@@ -68,7 +71,16 @@ class QueueClear extends BaseCommand
             return EXIT_ERROR;
         }
 
-        service('queue')->clear($queue);
+        try {
+            /** @var QueueConfig $config */
+            $config = $this->handleConfig($params);
+        } catch (QueueException $e) {
+            CLI::error($e->getMessage());
+
+            return EXIT_ERROR;
+        }
+
+        service('queue', $config)->clear($queue);
 
         CLI::print('Queue ', 'yellow');
         CLI::print($queue, 'light_yellow');

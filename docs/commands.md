@@ -63,6 +63,7 @@ Allows you to consume jobs from a specific queue.
 * `-priority` - The priority for the jobs from the queue (comma separated). If not provided explicit, will follow the priorities defined in the config via `$queuePriorities` for the given queue. Disabled by default.
 * `-tries` - The number of attempts after which the job will be considered as failed. Overrides settings from the Job class. Disabled by default.
 * `-retry-after` - The number of seconds after which the job is to be restarted in case of failure. Overrides settings from the Job class. Disabled by default.
+* `-config` - The alternative config file to use. Default value relies on `config('Queue')`. Use namespace to define an alternative, e.g. `Acme\\Config\\Queue`.
 * `--stop-when-empty` - Stop when the queue is empty.
 
 ##### Example
@@ -75,6 +76,10 @@ It will listen for 5 jobs from the `emails` queue and then stop.
 
 It will work the same as the previous command but will first consume jobs from the `emails` queue that were added with the `low` priority.
 
+    php spark queue:work email -config Acme\\Config\\Queue
+
+This is how we would use an alternative config file. However, usually, you will not need to specify it. It's recommended to use only a single config file across your application, **but** if you are building a modular system, you can use [Registrars](https://codeigniter.com/user_guide/general/configuration.html#registrars) to update the queue config file from within your module.
+
 ### queue:stop
 
 Allows you to stop a specific queue in a safe way. It does this as soon as the job that is running in the queue is completed.
@@ -82,6 +87,10 @@ Allows you to stop a specific queue in a safe way. It does this as soon as the j
 ##### Arguments
 
 * `queueName` - Name of the queue we will work with.
+
+##### Options
+
+* `-config` - The alternative config file to use. Default value relies on `config('Queue')`.
 
 ##### Example
 
@@ -106,6 +115,7 @@ Allows you to view all failed jobs. Also only from a specific queue
 ##### Options
 
 * `-queue` - Queue name.
+* `-config` - The alternative config file to use. Default value relies on `config('Queue')`.
 
 ##### Example
 
@@ -124,6 +134,7 @@ Allows you to retry failed jobs back to the queue.
 ##### Options
 
 * `-queue` -  Queue name.
+* `-config` - The alternative config file to use. Default value relies on `config('Queue')`.
 
 ##### Example
 
@@ -139,6 +150,10 @@ Allows you to delete the failed job by ID
 
 * `id` - ID of the failed job.
 
+##### Options
+
+* `-config` - The alternative config file to use. Default value relies on `config('Queue')`.
+
 ##### Example
 
     php spark queue:forget 123
@@ -151,6 +166,7 @@ Allows you to delete many failed jobs at once. Based on the failed date and queu
 
 * `-hours` - Number of hours.
 * `-queue` - Queue name.
+* `-config` - The alternative config file to use. Default value relies on `config('Queue')`.
 
 ##### Example
 

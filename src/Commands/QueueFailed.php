@@ -13,19 +13,12 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Queue\Commands;
 
-use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
+use CodeIgniter\Queue\Exceptions\QueueException;
 
-class QueueFailed extends BaseCommand
+class QueueFailed extends QueueCommand
 {
-    /**
-     * The Command's Group
-     *
-     * @var string
-     */
-    protected $group = 'Queue';
-
     /**
      * The Command's Name
      *
@@ -53,7 +46,8 @@ class QueueFailed extends BaseCommand
      * @var array<string, string>
      */
     protected $options = [
-        '-queue' => 'Queue name.',
+        '-queue'  => 'Queue name.',
+        '-config' => 'The alternative config file to use. Default value: relies on config(\'Queue\')',
     ];
 
     /**
@@ -64,10 +58,16 @@ class QueueFailed extends BaseCommand
         // Read params
         $queue = $params['queue'] ?? CLI::getOption('queue');
 
-        /** @var QueueConfig $config */
-        $config = config('Queue');
+        try {
+            /** @var QueueConfig $config */
+            $config = $this->handleConfig($params);
+        } catch (QueueException $e) {
+            CLI::error($e->getMessage());
 
-        $results = service('queue')->listFailed($queue);
+            return EXIT_ERROR;
+        }
+
+        $results = service('queue', $config)->listFailed($queue);
 
         $thead = ['ID', 'Connection', 'Queue', 'Class', 'Failed At'];
         $tbody = [];

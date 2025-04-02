@@ -13,14 +13,12 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Queue\Commands;
 
-use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\Publisher\Publisher;
 use Throwable;
 
-class QueuePublish extends BaseCommand
+class QueuePublish extends QueueCommand
 {
-    protected $group       = 'Queue';
     protected $name        = 'queue:publish';
     protected $description = 'Publish Queue config file into the current application.';
 

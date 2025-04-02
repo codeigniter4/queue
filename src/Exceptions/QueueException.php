@@ -56,4 +56,9 @@ final class QueueException extends RuntimeException
     {
         return new self(lang('Queue.incorrectDelayValue'));
     }
+
+    public static function forIncorrectConfigFile(): static
+    {
+        return new self(lang('Queue.incorrectConfigFile'));
+    }
 }

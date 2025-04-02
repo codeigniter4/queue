@@ -13,18 +13,12 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Queue\Commands;
 
-use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\Queue\Config\Queue as QueueConfig;
+use CodeIgniter\Queue\Exceptions\QueueException;
 
-class QueueRetry extends BaseCommand
+class QueueRetry extends QueueCommand
 {
-    /**
-     * The Command's Group
-     *
-     * @var string
-     */
-    protected $group = 'Queue';
-
     /**
      * The Command's Name
      *
@@ -61,7 +55,8 @@ class QueueRetry extends BaseCommand
      * @var array<string, string>
      */
     protected $options = [
-        '-queue' => 'Queue name.',
+        '-queue'  => 'Queue name.',
+        '-config' => 'The alternative config file to use. Default value: relies on config(\'Queue\')',
     ];
 
     /**
@@ -77,11 +72,20 @@ class QueueRetry extends BaseCommand
             return EXIT_ERROR;
         }
 
+        try {
+            /** @var QueueConfig $config */
+            $config = $this->handleConfig($params);
+        } catch (QueueException $e) {
+            CLI::error($e->getMessage());
+
+            return EXIT_ERROR;
+        }
+
         $id = $id === 'all' ? null : (int) $id;
 
         $queue = $params['queue'] ?? CLI::getOption('queue');
 
-        $count = service('queue')->retry($id, $queue);
+        $count = service('queue', $config)->retry($id, $queue);
 
         if ($count === 0) {
             CLI::write(sprintf('No failed jobs has been restored to the queue %s', $queue), 'red');

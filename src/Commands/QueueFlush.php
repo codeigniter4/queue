@@ -13,18 +13,12 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Queue\Commands;
 
-use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\Queue\Config\Queue as QueueConfig;
+use CodeIgniter\Queue\Exceptions\QueueException;
 
-class QueueFlush extends BaseCommand
+class QueueFlush extends QueueCommand
 {
-    /**
-     * The Command's Group
-     *
-     * @var string
-     */
-    protected $group = 'Queue';
-
     /**
      * The Command's Name
      *
@@ -52,8 +46,9 @@ class QueueFlush extends BaseCommand
      * @var array<string, string>
      */
     protected $options = [
-        '-hours' => 'Number of hours.',
-        '-queue' => 'Queue name.',
+        '-hours'  => 'Number of hours.',
+        '-queue'  => 'Queue name.',
+        '-config' => 'The alternative config file to use. Default value: relies on config(\'Queue\')',
     ];
 
     /**
@@ -65,11 +60,20 @@ class QueueFlush extends BaseCommand
         $hours = $params['hours'] ?? CLI::getOption('hours');
         $queue = $params['queue'] ?? CLI::getOption('queue');
 
+        try {
+            /** @var QueueConfig $config */
+            $config = $this->handleConfig($params);
+        } catch (QueueException $e) {
+            CLI::error($e->getMessage());
+
+            return EXIT_ERROR;
+        }
+
         if ($hours !== null) {
             $hours = (int) $hours;
         }
 
-        service('queue')->flush($hours, $queue);
+        service('queue', $config)->flush($hours, $queue);
 
         if ($hours === null) {
             CLI::write(sprintf('All failed jobs has been removed from the queue %s', $queue), 'green');
