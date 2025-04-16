@@ -88,7 +88,7 @@ final class DatabaseHandlerTest extends TestCase
         $this->assertTrue($result);
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue',
-            'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value']]),
+            'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value'], 'metadata' => []]),
             'available_at' => 1703859316,
         ]);
     }
@@ -106,7 +106,7 @@ final class DatabaseHandlerTest extends TestCase
         $this->assertTrue($result);
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue',
-            'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value']]),
+            'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value'], 'metadata' => []]),
             'priority'     => 'high',
             'available_at' => 1703859316,
         ]);
@@ -125,7 +125,7 @@ final class DatabaseHandlerTest extends TestCase
         $this->assertTrue($result);
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue',
-            'payload'      => json_encode(['job' => 'success', 'data' => ['key1' => 'value1']]),
+            'payload'      => json_encode(['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []]),
             'priority'     => 'low',
             'available_at' => 1703859316,
         ]);
@@ -135,19 +135,19 @@ final class DatabaseHandlerTest extends TestCase
         $this->assertTrue($result);
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue',
-            'payload'      => json_encode(['job' => 'success', 'data' => ['key2' => 'value2']]),
+            'payload'      => json_encode(['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []]),
             'priority'     => 'high',
             'available_at' => 1703859316,
         ]);
 
         $result = $handler->pop('queue', ['high', 'low']);
         $this->assertInstanceOf(QueueJob::class, $result);
-        $payload = ['job' => 'success', 'data' => ['key2' => 'value2']];
+        $payload = ['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []];
         $this->assertSame($payload, $result->payload);
 
         $result = $handler->pop('queue', ['high', 'low']);
         $this->assertInstanceOf(QueueJob::class, $result);
-        $payload = ['job' => 'success', 'data' => ['key1' => 'value1']];
+        $payload = ['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []];
         $this->assertSame($payload, $result->payload);
     }
 
@@ -167,11 +167,85 @@ final class DatabaseHandlerTest extends TestCase
 
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue-delay',
-            'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value']]),
+            'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value'], 'metadata' => []]),
             'available_at' => $availableAt,
         ]);
 
         $this->assertEqualsWithDelta(MINUTE, $availableAt - Time::now()->getTimestamp(), 1);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testChain(): void
+    {
+        Time::setTestNow('2023-12-29 14:15:16');
+
+        $handler = new DatabaseHandler($this->config);
+        $result  = $handler->chain(static function ($chain): void {
+            $chain
+                ->push('queue', 'success', ['key1' => 'value1'])
+                ->push('queue', 'success', ['key2' => 'value2']);
+        });
+
+        $this->assertTrue($result);
+        $this->seeInDatabase('queue_jobs', [
+            'queue'   => 'queue',
+            'payload' => json_encode([
+                'job'      => 'success',
+                'data'     => ['key1' => 'value1'],
+                'metadata' => [
+                    'queue'       => 'queue',
+                    'chainedJobs' => [
+                        [
+                            'job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => ['queue' => 'queue']],
+                    ],
+                ],
+            ]),
+            'available_at' => 1703859316,
+        ]);
+    }
+
+    public function testChainWithPriorityAndDelay(): void
+    {
+        Time::setTestNow('2023-12-29 14:15:16');
+
+        $handler = new DatabaseHandler($this->config);
+        $result  = $handler->chain(static function ($chain): void {
+            $chain
+                ->push('queue', 'success', ['key1' => 'value1'])
+                ->setPriority('high')
+                ->setDelay(60)
+                ->push('queue', 'success', ['key2' => 'value2'])
+                ->setPriority('low')
+                ->setDelay(120);
+        });
+
+        $this->assertTrue($result);
+        $this->seeInDatabase('queue_jobs', [
+            'queue'   => 'queue',
+            'payload' => json_encode([
+                'job'      => 'success',
+                'data'     => ['key1' => 'value1'],
+                'metadata' => [
+                    'queue'       => 'queue',
+                    'priority'    => 'high',
+                    'delay'       => 60,
+                    'chainedJobs' => [
+                        [
+                            'job'      => 'success',
+                            'data'     => ['key2' => 'value2'],
+                            'metadata' => [
+                                'queue'    => 'queue',
+                                'priority' => 'low',
+                                'delay'    => 120,
+                            ],
+                        ],
+                    ],
+                ],
+            ]),
+            'available_at' => 1703859316 + 60, // Adding delay to available_at
+        ]);
     }
 
     public function testPushWithDelayException(): void
@@ -384,7 +458,7 @@ final class DatabaseHandlerTest extends TestCase
         $this->seeInDatabase('queue_jobs', [
             'id'      => 3,
             'queue'   => 'queue1',
-            'payload' => json_encode(['job' => 'failure', 'data' => []]),
+            'payload' => json_encode(['job' => 'failure', 'data' => [], 'metadata' => []]),
         ]);
         $this->dontSeeInDatabase('queue_jobs_failed', [
             'id' => 1,

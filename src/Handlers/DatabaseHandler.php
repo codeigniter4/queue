@@ -19,7 +19,8 @@ use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Models\QueueJobModel;
-use CodeIgniter\Queue\Payload;
+use CodeIgniter\Queue\Payloads\Payload;
+use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use ReflectionException;
 use Throwable;
 
@@ -46,13 +47,13 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
      *
      * @throws ReflectionException
      */
-    public function push(string $queue, string $job, array $data): bool
+    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): bool
     {
         $this->validateJobAndPriority($queue, $job);
 
         $queueJob = new QueueJob([
             'queue'        => $queue,
-            'payload'      => new Payload($job, $data),
+            'payload'      => new Payload($job, $data, $metadata),
             'priority'     => $this->priority,
             'status'       => Status::PENDING->value,
             'attempts'     => 0,

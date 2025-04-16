@@ -20,7 +20,8 @@ use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Interfaces\QueueInterface;
-use CodeIgniter\Queue\Payload;
+use CodeIgniter\Queue\Payloads\Payload;
+use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use Exception;
 use Predis\Client;
 use Throwable;
@@ -58,7 +59,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
     /**
      * Add job to the queue.
      */
-    public function push(string $queue, string $job, array $data): bool
+    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): bool
     {
         $this->validateJobAndPriority($queue, $job);
 
@@ -69,7 +70,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
         $queueJob = new QueueJob([
             'id'           => random_string('numeric', 16),
             'queue'        => $queue,
-            'payload'      => new Payload($job, $data),
+            'payload'      => new Payload($job, $data, $metadata),
             'priority'     => $this->priority,
             'status'       => Status::PENDING->value,
             'attempts'     => 0,

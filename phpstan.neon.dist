@@ -23,6 +23,10 @@ parameters:
 	        message: '#Call to an undefined method CodeIgniter\\Queue\\Models\\QueueJobFailedModel::truncate\(\).#'
 	        paths:
 	            - src/Handlers/BaseHandler.php
+	    -
+	        message: '#If condition is always true.#'
+	        paths:
+	            - src/Commands/QueueWork.php
 	universalObjectCratesClasses:
 		- CodeIgniter\Entity
 		- CodeIgniter\Entity\Entity

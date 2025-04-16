@@ -17,6 +17,7 @@ use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
+use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use Exception;
 use Throwable;
 
@@ -247,6 +248,11 @@ class QueueWork extends BaseCommand
             service('queue')->done($work, $config->keepDoneJobs);
 
             CLI::write('The processing of this job was successful', 'green');
+
+            // Check chained jobs
+            if (isset($payload['metadata']) && $payload['metadata'] !== []) {
+                $this->processNextJobInChain($payload['metadata']);
+            }
         } catch (Throwable $err) {
             if (isset($job) && ++$work->attempts < ($tries ?? $job->getTries())) {
                 // Schedule for later
@@ -260,6 +266,43 @@ class QueueWork extends BaseCommand
             timer()->stop('work');
             CLI::write(sprintf('It took: %s sec', timer()->getElapsedTime('work')) . PHP_EOL, 'cyan');
         }
+    }
+
+    /**
+     * Process the next job in the chain
+     */
+    private function processNextJobInChain(array $payloadMetadata): void
+    {
+        $payloadMetadata = PayloadMetadata::fromArray($payloadMetadata);
+
+        if (! $payloadMetadata->hasChainedJobs()) {
+            return;
+        }
+
+        $nextPayload = $payloadMetadata->getChainedJobs()->shift();
+        $priority    = $nextPayload->getPriority();
+        $delay       = $nextPayload->getDelay();
+
+        if ($priority !== null) {
+            service('queue')->setPriority($priority);
+        }
+
+        if ($delay !== null) {
+            service('queue')->setDelay($delay);
+        }
+
+        if ($payloadMetadata->hasChainedJobs()) {
+            $nextPayload->setChainedJobs($payloadMetadata->getChainedJobs());
+        }
+
+        service('queue')->push(
+            $nextPayload->getQueue(),
+            $nextPayload->getJob(),
+            $nextPayload->getData(),
+            $nextPayload->getMetadata(),
+        );
+
+        CLI::write(sprintf('Chained job: %s has been placed in the queue: %s', $nextPayload->getJob(), $nextPayload->getQueue()), 'green');
     }
 
     private function maxJobsCheck(int $maxJobs, int $countJobs): bool

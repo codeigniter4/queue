@@ -160,6 +160,21 @@ service('queue')->push('emails', 'email', ['message' => 'Email message goes here
 
 We will be pushing `email` job to the `emails` queue.
 
+### Sending chained jobs to the queue
+
+Sending chained jobs is also simple and lets you specify the particular order of the job execution.
+
+```php
+service('queue')->chain(function($chain) {
+    $chain
+        ->push('reports', 'generate-report', ['userId' => 123])
+        ->push('emails', 'email', ['message' => 'Email message goes here', 'userId' => 123]);
+});
+```
+
+In the example above, we will send jobs to the `reports` and `emails` queue. First, we will generate a report for given user with the `generate-report` job, after this, we will send an email with `email` job.
+The `email` job will be executed only if the `generate-report` job was successful.
+
 ### Consuming the queue
 
 Since we sent our sample job to queue `emails`, then we need to run the worker with the appropriate queue:
