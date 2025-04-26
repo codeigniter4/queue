@@ -255,7 +255,7 @@ final class QueueWorkTest extends CLITestCase
             'queue'      => 'test',
             'payload'    => [
                 'job'      => 'success',
-                'data'     => ['key' => 'value'],
+                'data'     => ['key4' => 'value4'],
                 'metadata' => [
                     'taskLockKey' => $lockKey,
                     'taskLockTTL' => $lockTTL,
