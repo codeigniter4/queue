@@ -239,7 +239,15 @@ class QueueWork extends BaseCommand
         timer()->start('work');
         $payload = $work->payload;
 
+        $payloadMetadata = null;
+
         try {
+            // Load payload metadata
+            $payloadMetadata = PayloadMetadata::fromArray($payload['metadata'] ?? []);
+
+            // Renew lock if needed
+            $this->renewLock($payloadMetadata);
+
             $class = $config->resolveJobClass($payload['job']);
             $job   = new $class($payload['data']);
             $job->process();
@@ -250,9 +258,7 @@ class QueueWork extends BaseCommand
             CLI::write('The processing of this job was successful', 'green');
 
             // Check chained jobs
-            if (isset($payload['metadata']) && $payload['metadata'] !== []) {
-                $this->processNextJobInChain($payload['metadata']);
-            }
+            $this->processNextJobInChain($payloadMetadata);
         } catch (Throwable $err) {
             if (isset($job) && ++$work->attempts < ($tries ?? $job->getTries())) {
                 // Schedule for later
@@ -263,6 +269,9 @@ class QueueWork extends BaseCommand
             }
             CLI::write('The processing of this job failed', 'red');
         } finally {
+            // Remove lock if needed
+            $this->clearLock($payloadMetadata);
+
             timer()->stop('work');
             CLI::write(sprintf('It took: %s sec', timer()->getElapsedTime('work')) . PHP_EOL, 'cyan');
         }
@@ -271,10 +280,8 @@ class QueueWork extends BaseCommand
     /**
      * Process the next job in the chain
      */
-    private function processNextJobInChain(array $payloadMetadata): void
+    private function processNextJobInChain(PayloadMetadata $payloadMetadata): void
     {
-        $payloadMetadata = PayloadMetadata::fromArray($payloadMetadata);
-
         if (! $payloadMetadata->hasChainedJobs()) {
             return;
         }
@@ -303,6 +310,40 @@ class QueueWork extends BaseCommand
         );
 
         CLI::write(sprintf('Chained job: %s has been placed in the queue: %s', $nextPayload->getJob(), $nextPayload->getQueue()), 'green');
+    }
+
+    /**
+     * Renew task lock
+     */
+    private function renewLock(PayloadMetadata $payloadMetadata): void
+    {
+        if (! $payloadMetadata->has('taskLockTTL') || ! $payloadMetadata->has('taskLockKey')) {
+            return;
+        }
+
+        $ttl = $payloadMetadata->get('taskLockTTL');
+        $key = $payloadMetadata->get('taskLockKey');
+
+        // Permanent lock, no need to renew
+        if ($ttl === 0) {
+            return;
+        }
+
+        cache()->save($key, [], $ttl);
+    }
+
+    /**
+     * Remove task lock
+     */
+    private function clearLock(PayloadMetadata $payloadMetadata): void
+    {
+        if (! $payloadMetadata->has('taskLockKey')) {
+            return;
+        }
+
+        $key = $payloadMetadata->get('taskLockKey');
+
+        cache()->delete($key);
     }
 
     private function maxJobsCheck(int $maxJobs, int $countJobs): bool
