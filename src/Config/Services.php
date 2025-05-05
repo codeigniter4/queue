@@ -20,14 +20,14 @@ use CodeIgniter\Queue\Queue;
 
 class Services extends BaseService
 {
-    public static function queue(?QueueConfig $config = null, $getShared = true): QueueInterface
+    public static function queue($getShared = true): QueueInterface
     {
         if ($getShared) {
-            return static::getSharedInstance('queue', $config);
+            return static::getSharedInstance('queue');
         }
 
-        /** @var QueueConfig|null $config */
-        $config ??= config('Queue');
+        /** @var QueueConfig $config */
+        $config = config('Queue');
 
         return (new Queue($config))->init();
     }
