@@ -63,7 +63,7 @@ final class ChainBuilderTest extends TestCase
             $chain->push('queue', 'success', ['key' => 'value']);
         });
 
-        $this->assertTrue($result);
+        $this->assertNotNull($result);
         $this->seeInDatabase('queue_jobs', [
             'queue'   => 'queue',
             'payload' => json_encode([
@@ -84,7 +84,7 @@ final class ChainBuilderTest extends TestCase
             // No jobs added
         });
 
-        $this->assertTrue($result);
+        $this->assertNull($result);
         $this->seeInDatabase('queue_jobs', []);
     }
 
@@ -99,7 +99,7 @@ final class ChainBuilderTest extends TestCase
                 ->push('queue2', 'success', ['key2' => 'value2']);
         });
 
-        $this->assertTrue($result);
+        $this->assertNotNull($result);
         $this->seeInDatabase('queue_jobs', [
             'queue'   => 'queue1',
             'payload' => json_encode([
@@ -132,7 +132,7 @@ final class ChainBuilderTest extends TestCase
                 ->push('queue', 'success', ['key3' => 'value3']);
         });
 
-        $this->assertTrue($result);
+        $this->assertNotNull($result);
         $this->seeInDatabase('queue_jobs', [
             'queue'   => 'queue',
             'payload' => json_encode([

@@ -39,7 +39,7 @@ abstract class BaseHandler
 
     abstract public function name(): string;
 
-    abstract public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): bool;
+    abstract public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): ?string;
 
     abstract public function pop(string $queue, array $priorities): ?QueueJob;
 
@@ -153,7 +153,7 @@ abstract class BaseHandler
      *
      * @param Closure $callback Chain definition callback
      */
-    public function chain(Closure $callback): bool
+    public function chain(Closure $callback): ?string
     {
         $chainBuilder = new ChainBuilder($this);
         $callback($chainBuilder);

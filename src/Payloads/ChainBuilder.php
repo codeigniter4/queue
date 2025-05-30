@@ -44,10 +44,10 @@ class ChainBuilder
     /**
      * Dispatch the chain of jobs
      */
-    public function dispatch(): bool
+    public function dispatch(): ?string
     {
         if ($this->payloads->count() === 0) {
-            return true;
+            return null;
         }
 
         $current  = $this->payloads->shift();

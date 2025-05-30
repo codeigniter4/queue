@@ -64,11 +64,11 @@ final class PushAndPopWithDelayTest extends TestCase
         $handler = new $class($this->config);
         $result  = $handler->setDelay(MINUTE)->push('queue-delay', 'success', ['key1' => 'value1']);
 
-        $this->assertTrue($result);
+        $this->assertNotNull($result);
 
         $result = $handler->push('queue-delay', 'success', ['key2' => 'value2']);
 
-        $this->assertTrue($result);
+        $this->assertNotNull($result);
 
         if ($name === 'database') {
             $this->seeInDatabase('queue_jobs', [

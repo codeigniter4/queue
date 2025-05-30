@@ -59,7 +59,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
     /**
      * Add job to the queue.
      */
-    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): bool
+    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): ?string
     {
         $this->validateJobAndPriority($queue, $job);
 
@@ -67,8 +67,10 @@ class PredisHandler extends BaseHandler implements QueueInterface
 
         $availableAt = Time::now()->addSeconds($this->delay ?? 0);
 
+        $jobId = random_string('numeric', 16);
+
         $queueJob = new QueueJob([
-            'id'           => random_string('numeric', 16),
+            'id'           => $jobId,
             'queue'        => $queue,
             'payload'      => new Payload($job, $data, $metadata),
             'priority'     => $this->priority,
@@ -81,7 +83,7 @@ class PredisHandler extends BaseHandler implements QueueInterface
 
         $this->priority = $this->delay = null;
 
-        return $result > 0;
+        return $result > 0 ? $jobId : null;
     }
 
     /**

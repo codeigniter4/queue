@@ -47,7 +47,7 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
      *
      * @throws ReflectionException
      */
-    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): bool
+    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): ?string
     {
         $this->validateJobAndPriority($queue, $job);
 
@@ -62,7 +62,9 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
 
         $this->priority = $this->delay = null;
 
-        return $this->jobModel->insert($queueJob, false);
+        $jobId = $this->jobModel->insert($queueJob);
+
+        return $jobId !== 0 ? (string) $jobId : null;
     }
 
     /**
