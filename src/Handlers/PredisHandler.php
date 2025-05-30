@@ -65,9 +65,8 @@ class PredisHandler extends BaseHandler implements QueueInterface
 
         helper('text');
 
+        $jobId       = random_string('numeric', 16);
         $availableAt = Time::now()->addSeconds($this->delay ?? 0);
-
-        $jobId = random_string('numeric', 16);
 
         $queueJob = new QueueJob([
             'id'           => $jobId,

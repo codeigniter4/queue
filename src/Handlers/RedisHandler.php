@@ -83,8 +83,7 @@ class RedisHandler extends BaseHandler implements QueueInterface
         helper('text');
 
         $availableAt = Time::now()->addSeconds($this->delay ?? 0);
-
-        $jobId = random_string('numeric', 16);
+        $jobId       = random_string('numeric', 16);
 
         $queueJob = new QueueJob([
             'id'           => $jobId,
