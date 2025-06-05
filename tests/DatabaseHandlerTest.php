@@ -85,7 +85,7 @@ final class DatabaseHandlerTest extends TestCase
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->push('queue', 'success', ['key' => 'value']);
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue',
             'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value'], 'metadata' => []]),
@@ -103,7 +103,7 @@ final class DatabaseHandlerTest extends TestCase
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->setPriority('high')->push('queue', 'success', ['key' => 'value']);
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue',
             'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value'], 'metadata' => []]),
@@ -122,7 +122,7 @@ final class DatabaseHandlerTest extends TestCase
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->push('queue', 'success', ['key1' => 'value1']);
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue',
             'payload'      => json_encode(['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []]),
@@ -132,7 +132,7 @@ final class DatabaseHandlerTest extends TestCase
 
         $result = $handler->setPriority('high')->push('queue', 'success', ['key2' => 'value2']);
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue',
             'payload'      => json_encode(['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []]),
@@ -161,7 +161,7 @@ final class DatabaseHandlerTest extends TestCase
         $handler = new DatabaseHandler($this->config);
         $result  = $handler->setDelay(MINUTE)->push('queue-delay', 'success', ['key' => 'value']);
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
 
         $availableAt = 1703859376;
 
@@ -188,7 +188,7 @@ final class DatabaseHandlerTest extends TestCase
                 ->push('queue', 'success', ['key2' => 'value2']);
         });
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
         $this->seeInDatabase('queue_jobs', [
             'queue'   => 'queue',
             'payload' => json_encode([
@@ -221,7 +221,7 @@ final class DatabaseHandlerTest extends TestCase
                 ->setDelay(120);
         });
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
         $this->seeInDatabase('queue_jobs', [
             'queue'   => 'queue',
             'payload' => json_encode([

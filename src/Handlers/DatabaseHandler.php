@@ -21,6 +21,7 @@ use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Models\QueueJobModel;
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
+use CodeIgniter\Queue\QueuePushResult;
 use ReflectionException;
 use Throwable;
 
@@ -44,10 +45,8 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
 
     /**
      * Add job to the queue.
-     *
-     * @throws ReflectionException
      */
-    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): ?string
+    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): QueuePushResult
     {
         $this->validateJobAndPriority($queue, $job);
 
@@ -62,9 +61,17 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
 
         $this->priority = $this->delay = null;
 
-        $jobId = $this->jobModel->insert($queueJob);
+        try {
+            $jobId = $this->jobModel->insert($queueJob);
+        } catch (Throwable $e) {
+            return QueuePushResult::failure($e->getMessage());
+        }
 
-        return $jobId !== 0 ? (string) $jobId : null;
+        if ($jobId === 0) {
+            return QueuePushResult::failure('Failed to insert job into the database.');
+        }
+
+        return QueuePushResult::success($jobId);
     }
 
     /**

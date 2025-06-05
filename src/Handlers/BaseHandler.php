@@ -22,6 +22,7 @@ use CodeIgniter\Queue\Exceptions\QueueException;
 use CodeIgniter\Queue\Models\QueueJobFailedModel;
 use CodeIgniter\Queue\Payloads\ChainBuilder;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
+use CodeIgniter\Queue\QueuePushResult;
 use CodeIgniter\Queue\Traits\HasQueueValidation;
 use ReflectionException;
 use Throwable;
@@ -39,7 +40,7 @@ abstract class BaseHandler
 
     abstract public function name(): string;
 
-    abstract public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): ?string;
+    abstract public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): QueuePushResult;
 
     abstract public function pop(string $queue, array $priorities): ?QueueJob;
 
@@ -153,7 +154,7 @@ abstract class BaseHandler
      *
      * @param Closure $callback Chain definition callback
      */
-    public function chain(Closure $callback): ?string
+    public function chain(Closure $callback): QueuePushResult
     {
         $chainBuilder = new ChainBuilder($this);
         $callback($chainBuilder);

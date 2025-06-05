@@ -69,7 +69,7 @@ final class RedisHandlerTest extends TestCase
         $handler = new RedisHandler($this->config);
         $result  = $handler->push('queue', 'success', ['key' => 'value']);
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
 
         $redis = self::getPrivateProperty($handler, 'redis');
         $this->assertSame(1, $redis->zCard('queues:queue:low'));
@@ -86,7 +86,7 @@ final class RedisHandlerTest extends TestCase
         $handler = new RedisHandler($this->config);
         $result  = $handler->setPriority('high')->push('queue', 'success', ['key' => 'value']);
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
 
         $redis = self::getPrivateProperty($handler, 'redis');
         $this->assertSame(1, $redis->zCard('queues:queue:high'));
@@ -108,7 +108,7 @@ final class RedisHandlerTest extends TestCase
         $handler = new RedisHandler($this->config);
         $result  = $handler->setDelay(MINUTE)->push('queue-delay', 'success', ['key' => 'value']);
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
 
         $redis = self::getPrivateProperty($handler, 'redis');
         $this->assertSame(1, $redis->zCard('queues:queue-delay:default'));
@@ -134,7 +134,7 @@ final class RedisHandlerTest extends TestCase
                 ->push('queue', 'success', ['key2' => 'value2']);
         });
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
 
         $redis = self::getPrivateProperty($handler, 'redis');
         $this->assertSame(1, $redis->zCard('queues:queue:low'));
@@ -174,7 +174,7 @@ final class RedisHandlerTest extends TestCase
                 ->setDelay(120);
         });
 
-        $this->assertNotNull($result);
+        $this->assertTrue($result->getStatus());
 
         $redis = self::getPrivateProperty($handler, 'redis');
         // Should be in high priority queue
