@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Queue;
 
+/**
+ * Represents the result of a queue push operation.
+ */
 class QueuePushResult
 {
     public function __construct(
@@ -22,26 +25,41 @@ class QueuePushResult
     ) {
     }
 
+    /**
+     * Creates a successful push result.
+     */
     public static function success(int $jobId): self
     {
         return new self(true, $jobId);
     }
 
+    /**
+     * Creates a failed push result.
+     */
     public static function failure(?string $error = null): self
     {
         return new self(false, null, $error);
     }
 
+    /**
+     * Returns whether the push operation was successful.
+     */
     public function getStatus(): bool
     {
         return $this->success;
     }
 
+    /**
+     * Returns the job ID if the push was successful, null otherwise.
+     */
     public function getJobId(): ?int
     {
         return $this->jobId;
     }
 
+    /**
+     * Returns the error message if the push failed, null otherwise.
+     */
     public function getError(): ?string
     {
         return $this->error;
