@@ -22,6 +22,7 @@ use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
+use CodeIgniter\Queue\QueuePushResult;
 use Redis;
 use RedisException;
 use Throwable;
@@ -76,16 +77,17 @@ class RedisHandler extends BaseHandler implements QueueInterface
      *
      * @throws RedisException
      */
-    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): bool
+    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): QueuePushResult
     {
         $this->validateJobAndPriority($queue, $job);
 
         helper('text');
 
         $availableAt = Time::now()->addSeconds($this->delay ?? 0);
+        $jobId       = (int) random_string('numeric', 16);
 
         $queueJob = new QueueJob([
-            'id'           => random_string('numeric', 16),
+            'id'           => $jobId,
             'queue'        => $queue,
             'payload'      => new Payload($job, $data, $metadata),
             'priority'     => $this->priority,
@@ -94,11 +96,21 @@ class RedisHandler extends BaseHandler implements QueueInterface
             'available_at' => $availableAt,
         ]);
 
-        $result = (int) $this->redis->zAdd("queues:{$queue}:{$this->priority}", $availableAt->timestamp, json_encode($queueJob));
+        try {
+            $result = $this->redis->zAdd("queues:{$queue}:{$this->priority}", $availableAt->timestamp, json_encode($queueJob));
+        } catch (Throwable $e) {
+            return QueuePushResult::failure('Unexpected Redis error: ' . $e->getMessage());
+        } finally {
+            $this->priority = $this->delay = null;
+        }
 
-        $this->priority = $this->delay = null;
+        if ($result === false) {
+            return QueuePushResult::failure('Failed to add job to Redis.');
+        }
 
-        return $result > 0;
+        return (int) $result > 0
+            ? QueuePushResult::success($jobId)
+            : QueuePushResult::failure('Job already exists in the queue.');
     }
 
     /**

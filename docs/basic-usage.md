@@ -160,6 +160,12 @@ service('queue')->push('emails', 'email', ['message' => 'Email message goes here
 
 We will be pushing `email` job to the `emails` queue.
 
+As a result of calling the `push()` method, you will receive a `QueuePushResult` object, which you can inspect if needed. It provides the following information:
+
+- `getStatus()`: Indicates whether the job was successfully added to the queue.
+- `getJobId()`: Returns the ID of the job that was added to the queue.
+- `getError()`: Returns any error that occurred if the job was not added.
+
 ### Sending chained jobs to the queue
 
 Sending chained jobs is also simple and lets you specify the particular order of the job execution.
@@ -172,8 +178,10 @@ service('queue')->chain(function($chain) {
 });
 ```
 
-In the example above, we will send jobs to the `reports` and `emails` queue. First, we will generate a report for given user with the `generate-report` job, after this, we will send an email with `email` job.
+In the example above, we will send jobs to the `reports` and `emails` queues. First, we will generate a report for given user with the `generate-report` job, after this, we will send an email with `email` job.
 The `email` job will be executed only if the `generate-report` job was successful.
+
+As with the `push()` method, calling the `chain()` method also returns a `QueuePushResult` object.
 
 ### Consuming the queue
 

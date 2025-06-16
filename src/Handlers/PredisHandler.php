@@ -22,6 +22,7 @@ use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
+use CodeIgniter\Queue\QueuePushResult;
 use Exception;
 use Predis\Client;
 use Throwable;
@@ -59,16 +60,17 @@ class PredisHandler extends BaseHandler implements QueueInterface
     /**
      * Add job to the queue.
      */
-    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): bool
+    public function push(string $queue, string $job, array $data, ?PayloadMetadata $metadata = null): QueuePushResult
     {
         $this->validateJobAndPriority($queue, $job);
 
         helper('text');
 
+        $jobId       = (int) random_string('numeric', 16);
         $availableAt = Time::now()->addSeconds($this->delay ?? 0);
 
         $queueJob = new QueueJob([
-            'id'           => random_string('numeric', 16),
+            'id'           => $jobId,
             'queue'        => $queue,
             'payload'      => new Payload($job, $data, $metadata),
             'priority'     => $this->priority,
@@ -77,11 +79,19 @@ class PredisHandler extends BaseHandler implements QueueInterface
             'available_at' => $availableAt,
         ]);
 
-        $result = $this->predis->zadd("queues:{$queue}:{$this->priority}", [json_encode($queueJob) => $availableAt->timestamp]);
+        try {
+            $result = $this->predis->zadd("queues:{$queue}:{$this->priority}", [json_encode($queueJob) => $availableAt->timestamp]);
+        } catch (Throwable $e) {
+            return QueuePushResult::failure('Unexpected Redis error: ' . $e->getMessage());
+        } finally {
+            $this->priority = $this->delay = null;
+        }
 
         $this->priority = $this->delay = null;
 
-        return $result > 0;
+        return $result > 0
+            ? QueuePushResult::success($jobId)
+            : QueuePushResult::failure('Job already exists in the queue.');
     }
 
     /**

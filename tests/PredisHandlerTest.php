@@ -72,7 +72,7 @@ final class PredisHandlerTest extends TestCase
         $handler = new PredisHandler($this->config);
         $result  = $handler->push('queue', 'success', ['key' => 'value']);
 
-        $this->assertTrue($result);
+        $this->assertTrue($result->getStatus());
 
         $predis = self::getPrivateProperty($handler, 'predis');
         $this->assertSame(1, $predis->zcard('queues:queue:low'));
@@ -92,7 +92,7 @@ final class PredisHandlerTest extends TestCase
         $handler = new PredisHandler($this->config);
         $result  = $handler->setPriority('high')->push('queue', 'success', ['key' => 'value']);
 
-        $this->assertTrue($result);
+        $this->assertTrue($result->getStatus());
 
         $predis = self::getPrivateProperty($handler, 'predis');
         $this->assertSame(1, $predis->zcard('queues:queue:high'));
@@ -114,7 +114,7 @@ final class PredisHandlerTest extends TestCase
         $handler = new PredisHandler($this->config);
         $result  = $handler->setDelay(MINUTE)->push('queue-delay', 'success', ['key' => 'value']);
 
-        $this->assertTrue($result);
+        $this->assertTrue($result->getStatus());
 
         $predis = self::getPrivateProperty($handler, 'predis');
         $this->assertSame(1, $predis->zcard('queues:queue-delay:default'));
@@ -140,7 +140,7 @@ final class PredisHandlerTest extends TestCase
                 ->push('queue', 'success', ['key2' => 'value2']);
         });
 
-        $this->assertTrue($result);
+        $this->assertTrue($result->getStatus());
 
         $predis = self::getPrivateProperty($handler, 'predis');
         $this->assertSame(1, $predis->zcard('queues:queue:low'));
@@ -180,7 +180,7 @@ final class PredisHandlerTest extends TestCase
                 ->setDelay(120);
         });
 
-        $this->assertTrue($result);
+        $this->assertTrue($result->getStatus());
 
         $predis = self::getPrivateProperty($handler, 'predis');
         // Should be in high priority queue

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace CodeIgniter\Queue\Payloads;
 
 use CodeIgniter\Queue\Handlers\BaseHandler;
+use CodeIgniter\Queue\QueuePushResult;
 
 class ChainBuilder
 {
@@ -44,10 +45,10 @@ class ChainBuilder
     /**
      * Dispatch the chain of jobs
      */
-    public function dispatch(): bool
+    public function dispatch(): QueuePushResult
     {
         if ($this->payloads->count() === 0) {
-            return true;
+            return QueuePushResult::failure('No jobs to dispatch.');
         }
 
         $current  = $this->payloads->shift();
