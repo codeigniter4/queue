@@ -38,25 +38,7 @@ final class PushAndPopWithDelayTest extends TestCase
         $this->config = config(QueueConfig::class);
     }
 
-    public static function handlerProvider(): iterable
-    {
-        return [
-            [
-                'database',                                   // name
-                'CodeIgniter\Queue\Handlers\DatabaseHandler', // class
-            ],
-            [
-                'redis',
-                'CodeIgniter\Queue\Handlers\RedisHandler',
-            ],
-            [
-                'predis',
-                'CodeIgniter\Queue\Handlers\PredisHandler',
-            ],
-        ];
-    }
-
-    #[DataProvider('handlerProvider')]
+    #[DataProvider('providePushAndPopWithDelay')]
     public function testPushAndPopWithDelay(string $name, string $class): void
     {
         Time::setTestNow('2023-12-29 14:15:16');
@@ -99,5 +81,23 @@ final class PushAndPopWithDelayTest extends TestCase
         $this->assertInstanceOf(QueueJob::class, $result);
         $payload = ['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []];
         $this->assertSame($payload, $result->payload);
+    }
+
+    public static function providePushAndPopWithDelay(): iterable
+    {
+        return [
+            [
+                'database',                                   // name
+                'CodeIgniter\Queue\Handlers\DatabaseHandler', // class
+            ],
+            [
+                'redis',
+                'CodeIgniter\Queue\Handlers\RedisHandler',
+            ],
+            [
+                'predis',
+                'CodeIgniter\Queue\Handlers\PredisHandler',
+            ],
+        ];
     }
 }
