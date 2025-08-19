@@ -16,6 +16,7 @@ namespace Tests\Support\Config;
 use CodeIgniter\Queue\Config\Queue as BaseQueue;
 use CodeIgniter\Queue\Handlers\DatabaseHandler;
 use CodeIgniter\Queue\Handlers\PredisHandler;
+use CodeIgniter\Queue\Handlers\RabbitMQHandler;
 use CodeIgniter\Queue\Handlers\RedisHandler;
 use Tests\Support\Jobs\Failure;
 use Tests\Support\Jobs\Success;
@@ -34,6 +35,7 @@ class Queue extends BaseQueue
         'database' => DatabaseHandler::class,
         'redis'    => RedisHandler::class,
         'predis'   => PredisHandler::class,
+        'rabbitmq' => RabbitMQHandler::class,
     ];
 
     /**
@@ -67,6 +69,17 @@ class Queue extends BaseQueue
         'timeout'  => 5,
         'database' => 0,
         'prefix'   => '',
+    ];
+
+    /**
+     * RabbitMQ handler config.
+     */
+    public array $rabbitmq = [
+        'host'     => '127.0.0.1',
+        'port'     => 5672,
+        'user'     => 'guest',
+        'password' => 'guest',
+        'vhost'    => '/',
     ];
 
     /**

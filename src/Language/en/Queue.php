@@ -25,4 +25,5 @@ return [
     'tooLongPriorityName'     => 'The priority name is too long. It should be no longer than 64 letters.',
     'incorrectQueuePriority'  => 'This queue has incorrectly defined priority: "{0}" for the queue: "{1}".',
     'incorrectDelayValue'     => 'The number of seconds of delay must be a positive integer.',
+    'failedToJsonEncode'      => 'Failed to JSON encode queue job: {0}',
 ];

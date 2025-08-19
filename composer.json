@@ -19,7 +19,8 @@
         "codeigniter4/devkit": "^1.0",
         "codeigniter4/framework": "^4.3",
         "predis/predis": "^2.0",
-        "phpstan/phpstan-strict-rules": "^1.5"
+        "phpstan/phpstan-strict-rules": "^1.5",
+        "php-amqplib/php-amqplib": "^3.7"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
@@ -38,7 +39,8 @@
     },
     "suggest": {
         "ext-redis": "If you want to use RedisHandler",
-        "predis/predis": "If you want to use PredisHandler"
+        "predis/predis": "If you want to use PredisHandler",
+        "php-amqplib/php-amqplib": "If you want to use RabbitMQHandler"
     },
     "config": {
         "allow-plugins": {
