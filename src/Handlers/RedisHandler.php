@@ -40,9 +40,12 @@ class RedisHandler extends BaseHandler implements QueueInterface
             if (! $this->redis->connect($config->redis['host'], ($config->redis['host'][0] === '/' ? 0 : $config->redis['port']), $config->redis['timeout'])) {
                 throw new CriticalError('Queue: Redis connection failed. Check your configuration.');
             }
+            if (isset($config->redis['username'], $config->redis['password']) && ! $this->redis->auth([$config->redis['username'], $config->redis['password']])) {
+                throw new CriticalError('Queue: Redis authentication failed. Check your username and password.');
+            }
 
             if (isset($config->redis['password']) && ! $this->redis->auth($config->redis['password'])) {
-                throw new CriticalError('Queue: Redis authentication failed.');
+                throw new CriticalError('Queue: Redis authentication failed. Check your password.');
             }
 
             if (isset($config->redis['database']) && ! $this->redis->select($config->redis['database'])) {
