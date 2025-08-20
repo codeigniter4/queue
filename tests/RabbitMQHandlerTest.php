@@ -60,6 +60,8 @@ final class RabbitMQHandlerTest extends TestCase
             // Clear test queues
             try {
                 $this->handler->clear('test-queue');
+                $this->handler->clear('test-queue-1');
+                $this->handler->clear('test-queue-2');
                 $this->handler->clear('priority-test');
                 $this->handler->clear('custom-priority-queue');
             } catch (Throwable) {
