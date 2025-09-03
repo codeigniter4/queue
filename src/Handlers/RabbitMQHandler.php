@@ -24,14 +24,16 @@ use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use CodeIgniter\Queue\QueuePushResult;
 use PhpAmqpLib\Channel\AMQPChannel;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Connection\AbstractConnection;
+use PhpAmqpLib\Connection\AMQPConnectionConfig;
+use PhpAmqpLib\Connection\AMQPConnectionFactory;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use Throwable;
 
 class RabbitMQHandler extends BaseHandler implements QueueInterface
 {
-    private readonly AMQPStreamConnection $connection;
+    private readonly AbstractConnection $connection;
     private readonly AMQPChannel $channel;
     private array $declaredQueues    = [];
     private array $declaredExchanges = [];
@@ -39,28 +41,23 @@ class RabbitMQHandler extends BaseHandler implements QueueInterface
     public function __construct(protected QueueConfig $config)
     {
         try {
-            $this->connection = new AMQPStreamConnection(
-                $config->rabbitmq['host'],
-                $config->rabbitmq['port'],
-                $config->rabbitmq['user'],
-                $config->rabbitmq['password'],
-                $config->rabbitmq['vhost'] ?? '/',
-                $config->rabbitmq['insist'] ?? false,
-                $config->rabbitmq['loginMethod'] ?? 'AMQPLAIN',
-                null,
-                $config->rabbitmq['locale'] ?? 'en_US',
-                $config->rabbitmq['connectionTimeout'] ?? 3.0,
-                $config->rabbitmq['readWriteTimeout'] ?? 3.0,
-                null,
-                $config->rabbitmq['keepalive'] ?? false,
-                $config->rabbitmq['heartbeat'] ?? 0,
-            );
+            $amqp = new AMQPConnectionConfig();
+            $amqp->setHost($config->rabbitmq['host']);
+            $amqp->setPort($config->rabbitmq['port']);
+            $amqp->setUser($config->rabbitmq['user']);
+            $amqp->setPassword($config->rabbitmq['password']);
+            $amqp->setVhost($config->rabbitmq['vhost'] ?? '/');
 
-            $this->channel = $this->connection->channel();
+            // Enable SSL/TLS
+            if ($config->rabbitmq['ssl'] ?? ($config->rabbitmq['port'] === 5671)) {
+                $amqp->setIsSecure(true);
+            }
+
+            $this->connection = AMQPConnectionFactory::create($amqp);
+            $this->channel    = $this->connection->channel();
 
             // Set QoS for consumer (prefetch limit)
-            $prefetch = $config->rabbitmq['prefetch'] ?? 1;
-            $this->channel->basic_qos(0, $prefetch, false);
+            $this->channel->basic_qos(0, 1, false);
 
             // Enable publisher confirms if configured
             if ($config->rabbitmq['publisherConfirms'] ?? false) {
