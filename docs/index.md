@@ -35,6 +35,10 @@ If you use `Redis` (you still need a relational database to store failed jobs):
 - PHPRedis
 - Predis
 
+If you use `RabbitMQ` (you still need a relational database to store failed jobs):
+
+- php-amqplib
+
 ### Table of Contents
 
 * [Installation](installation.md)

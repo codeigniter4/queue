@@ -17,6 +17,7 @@ Available options:
 - [$database](#database)
 - [$redis](#redis)
 - [$predis](#predis)
+- [$rabbitmq](#rabbitmq)
 - [$keepDoneJobs](#keepdonejobs)
 - [$keepFailedJobs](#keepfailedjobs)
 - [$queueDefaultPriority](#queuedefaultpriority)
@@ -29,7 +30,7 @@ The default handler used by the library. Default value: `database`.
 
 ### $handlers
 
-An array of available handlers. By now only `database`, `redis` and `predis` handlers are implemented.
+An array of available handlers. Available handlers: `database`, `redis`, `predis`, and `rabbitmq`.
 
 ### $database
 
@@ -65,6 +66,16 @@ The configuration settings for `predis` handler. You need to have [Predis](https
 * `timeout` - The timeout for connection. Default value: `5`.
 * `database` - The database number. Default value: `0`.
 * `prefix` - The default key prefix. Default value: `''` (not set).
+
+### $rabbitmq
+
+The configuration settings for `rabbitmq` handler. You need to have [php-amqplib](https://github.com/php-amqplib/php-amqplib) installed to use it.
+
+* `host` - The RabbitMQ server host. Default value: `127.0.0.1`.
+* `port` - The port number. Default value: `5672`.
+* `username` - The username for authentication. Default value: `guest`.
+* `password` - The password for authentication. Default value: `guest`.
+* `vhost` - The virtual host to use. Default value: `/`.
 
 ### $keepDoneJobs
 

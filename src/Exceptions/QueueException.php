@@ -56,4 +56,9 @@ final class QueueException extends RuntimeException
     {
         return new self(lang('Queue.incorrectDelayValue'));
     }
+
+    public static function forFailedJsonEncode(string $error): static
+    {
+        return new self(lang('Queue.failedToJsonEncode', [$error]));
+    }
 }
