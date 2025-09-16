@@ -222,19 +222,12 @@ class RabbitMQHandler extends BaseHandler implements QueueInterface
     /**
      * Mark job as completed.
      */
-    public function done(QueueJob $queueJob, bool $keepJob): bool
+    public function done(QueueJob $queueJob): bool
     {
         try {
             // Acknowledge the message to remove it from the queue
             if (isset($queueJob->amqpDeliveryTag)) {
                 $this->channel->basic_ack($queueJob->amqpDeliveryTag);
-            }
-
-            if ($keepJob) {
-                // For RabbitMQ, we don't need to persist completed jobs anywhere
-                // as the message is already acknowledged and removed from the queue
-                // @TODO remove the $keepDoneJobs option entirely
-                $queueJob->status = Status::DONE->value;
             }
 
             return true;

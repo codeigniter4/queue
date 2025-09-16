@@ -89,11 +89,6 @@ class Queue extends BaseConfig
     ];
 
     /**
-     * Whether to keep the DONE jobs in the queue.
-     */
-    public bool $keepDoneJobs = false;
-
-    /**
      * Whether to save failed jobs for later review.
      */
     public bool $keepFailedJobs = true;

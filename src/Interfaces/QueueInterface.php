@@ -26,7 +26,7 @@ interface QueueInterface
 
     public function failed(QueueJob $queueJob, Throwable $err, bool $keepJob);
 
-    public function done(QueueJob $queueJob, bool $keepJob);
+    public function done(QueueJob $queueJob);
 
     public function clear(?string $queue = null);
 

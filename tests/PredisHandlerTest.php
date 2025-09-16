@@ -323,24 +323,7 @@ final class PredisHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testDoneAndKeepJob(): void
-    {
-        $handler  = new PredisHandler($this->config);
-        $queueJob = $handler->pop('queue1', ['default']);
-
-        $result = $handler->done($queueJob, true);
-
-        $predis = self::getPrivateProperty($handler, 'predis');
-
-        $this->assertTrue($result);
-        $this->assertSame(0, $predis->hexists('queues:queue1::reserved', $queueJob->id));
-        $this->assertSame(1, $predis->llen('queues:queue1::done'));
-    }
-
-    /**
-     * @throws ReflectionException
-     */
-    public function testDoneAndDontKeepJob(): void
+    public function testDone(): void
     {
         $handler  = new PredisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -348,11 +331,10 @@ final class PredisHandlerTest extends TestCase
         $predis = self::getPrivateProperty($handler, 'predis');
         $this->assertSame(0, $predis->zcard('queues:queue1:default'));
 
-        $result = $handler->done($queueJob, false);
+        $result = $handler->done($queueJob);
 
         $this->assertTrue($result);
         $this->assertSame(0, $predis->hexists('queues:queue1::reserved', $queueJob->id));
-        $this->assertSame(0, $predis->llen('queues:queue1::done'));
     }
 
     /**

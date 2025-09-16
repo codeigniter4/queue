@@ -301,22 +301,7 @@ final class RedisHandlerTest extends TestCase
             'queue'      => 'queue1',
         ]);
     }
-
-    public function testDoneAndKeepJob(): void
-    {
-        $handler  = new RedisHandler($this->config);
-        $queueJob = $handler->pop('queue1', ['default']);
-
-        $result = $handler->done($queueJob, true);
-
-        $redis = self::getPrivateProperty($handler, 'redis');
-
-        $this->assertTrue($result);
-        $this->assertFalse($redis->hExists('queues:queue1::reserved', (string) $queueJob->id));
-        $this->assertSame(1, $redis->lLen('queues:queue1::done'));
-    }
-
-    public function testDoneAndDontKeepJob(): void
+    public function testDone(): void
     {
         $handler  = new RedisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
@@ -324,13 +309,11 @@ final class RedisHandlerTest extends TestCase
         $redis = self::getPrivateProperty($handler, 'redis');
         $this->assertSame(0, $redis->zCard('queues:queue1:default'));
 
-        $result = $handler->done($queueJob, false);
+        $result = $handler->done($queueJob);
 
         $this->assertTrue($result);
         $this->assertFalse($redis->hExists('queues:queue1::reserved', (string) $queueJob->id));
-        $this->assertSame(0, $redis->lLen('queues:queue1::done'));
     }
-
     public function testClear(): void
     {
         $handler = new RedisHandler($this->config);
@@ -344,7 +327,6 @@ final class RedisHandlerTest extends TestCase
         $result = $handler->clear('queue1');
         $this->assertTrue($result);
     }
-
     public function testClearAll(): void
     {
         $handler = new RedisHandler($this->config);
@@ -358,7 +340,6 @@ final class RedisHandlerTest extends TestCase
         $result = $handler->clear();
         $this->assertTrue($result);
     }
-
     public function testRetry(): void
     {
         $handler = new RedisHandler($this->config);

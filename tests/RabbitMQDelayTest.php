@@ -83,7 +83,7 @@ final class RabbitMQDelayTest extends TestCase
         $job = $this->handler->pop('delay-test-queue', ['default']);
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('immediate', $job->payload['data']['type']);
-        $this->handler->done($job, false);
+        $this->handler->done($job);
 
         // Should not get delayed job yet (within first second)
         $job = $this->handler->pop('delay-test-queue', ['default']);
@@ -103,7 +103,7 @@ final class RabbitMQDelayTest extends TestCase
         $this->assertGreaterThanOrEqual($delaySeconds, $elapsedTime);
 
         // Clean up
-        $this->handler->done($job, false);
+        $this->handler->done($job);
     }
 
     public function testMultipleDelayedJobsWithDifferentDelays(): void
@@ -121,14 +121,14 @@ final class RabbitMQDelayTest extends TestCase
         $job = $this->handler->pop('delay-test-queue', ['default']);
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('immediate', $job->payload['data']['order']);
-        $this->handler->done($job, false);
+        $this->handler->done($job);
 
         // Wait 2 seconds - should get first delayed job
         sleep(2);
         $job = $this->handler->pop('delay-test-queue', ['default']);
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('first', $job->payload['data']['order']);
-        $this->handler->done($job, false);
+        $this->handler->done($job);
 
         // Should not get second job yet
         $job = $this->handler->pop('delay-test-queue', ['default']);
@@ -139,7 +139,7 @@ final class RabbitMQDelayTest extends TestCase
         $job = $this->handler->pop('delay-test-queue', ['default']);
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('second', $job->payload['data']['order']);
-        $this->handler->done($job, false);
+        $this->handler->done($job);
     }
 
     public function testZeroDelayWorksImmediately(): void
@@ -153,7 +153,7 @@ final class RabbitMQDelayTest extends TestCase
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('zero-delay', $job->payload['data']['type']);
 
-        $this->handler->done($job, false);
+        $this->handler->done($job);
     }
 
     /**

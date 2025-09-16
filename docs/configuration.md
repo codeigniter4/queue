@@ -18,7 +18,6 @@ Available options:
 - [$redis](#redis)
 - [$predis](#predis)
 - [$rabbitmq](#rabbitmq)
-- [$keepDoneJobs](#keepdonejobs)
 - [$keepFailedJobs](#keepfailedjobs)
 - [$queueDefaultPriority](#queuedefaultpriority)
 - [$queuePriorities](#queuepriorities)
@@ -76,10 +75,6 @@ The configuration settings for `rabbitmq` handler. You need to have [php-amqplib
 * `username` - The username for authentication. Default value: `guest`.
 * `password` - The password for authentication. Default value: `guest`.
 * `vhost` - The virtual host to use. Default value: `/`.
-
-### $keepDoneJobs
-
-If the job is done, should we keep it in the table? Default value: `false`.
 
 ### $keepFailedJobs
 

@@ -189,13 +189,8 @@ class RedisHandler extends BaseHandler implements QueueInterface
      *
      * @throws RedisException
      */
-    public function done(QueueJob $queueJob, bool $keepJob): bool
+    public function done(QueueJob $queueJob): bool
     {
-        if ($keepJob) {
-            $queueJob->status = Status::DONE->value;
-            $this->redis->lPush("queues:{$queueJob->queue}::done", json_encode($queueJob));
-        }
-
         return (bool) $this->redis->hDel("queues:{$queueJob->queue}::reserved", (string) $queueJob->id);
     }
 

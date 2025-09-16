@@ -160,13 +160,8 @@ class PredisHandler extends BaseHandler implements QueueInterface
     /**
      * Change job status to DONE or delete it.
      */
-    public function done(QueueJob $queueJob, bool $keepJob): bool
+    public function done(QueueJob $queueJob): bool
     {
-        if ($keepJob) {
-            $queueJob->status = Status::DONE->value;
-            $this->predis->lpush("queues:{$queueJob->queue}::done", [json_encode($queueJob)]);
-        }
-
         return (bool) $this->predis->hdel("queues:{$queueJob->queue}::reserved", [$queueJob->id]);
     }
 

@@ -126,12 +126,8 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
      *
      * @throws ReflectionException
      */
-    public function done(QueueJob $queueJob, bool $keepJob): bool
+    public function done(QueueJob $queueJob): bool
     {
-        if ($keepJob) {
-            return $this->jobModel->update($queueJob->id, ['status' => Status::DONE->value]);
-        }
-
         return $this->jobModel->delete($queueJob->id);
     }
 
