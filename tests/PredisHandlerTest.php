@@ -11,7 +11,7 @@ declare(strict_types=1);
  * the LICENSE file that was distributed with this source code.
  */
 
-namespace ThirdParty\queue\tests;
+namespace Tests;
 
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Queue\Entities\QueueJob;
