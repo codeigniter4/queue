@@ -17,7 +17,7 @@ use CodeIgniter\Exceptions\CriticalError;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Handlers\RabbitMQHandler;
 use CodeIgniter\Queue\QueuePushResult;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Connection\AMQPConnectionFactory;
 use Tests\Support\Config\Queue as QueueConfig;
 use Tests\Support\TestCase;
 use Throwable;
@@ -161,6 +161,6 @@ final class RabbitMQDelayTest extends TestCase
      */
     private function isRabbitMQAvailable(): bool
     {
-        return class_exists(AMQPStreamConnection::class);
+        return class_exists(AMQPConnectionFactory::class);
     }
 }

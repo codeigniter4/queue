@@ -20,7 +20,7 @@ use CodeIgniter\Queue\Handlers\RabbitMQHandler;
 use CodeIgniter\Queue\QueuePushResult;
 use CodeIgniter\Test\ReflectionHelper;
 use Exception;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Connection\AMQPConnectionFactory;
 use Tests\Support\Config\Queue as QueueConfig;
 use Tests\Support\TestCase;
 use Throwable;
@@ -383,6 +383,6 @@ final class RabbitMQHandlerTest extends TestCase
      */
     private function isRabbitMQAvailable(): bool
     {
-        return class_exists(AMQPStreamConnection::class);
+        return class_exists(AMQPConnectionFactory::class);
     }
 }
