@@ -15,7 +15,6 @@ namespace Tests;
 
 use CodeIgniter\Exceptions\CriticalError;
 use CodeIgniter\Queue\Entities\QueueJob;
-use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Exceptions\QueueException;
 use CodeIgniter\Queue\Handlers\RabbitMQHandler;
 use CodeIgniter\Queue\QueuePushResult;

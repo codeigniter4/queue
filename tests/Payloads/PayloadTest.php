@@ -272,8 +272,10 @@ final class PayloadTest extends TestCase
         $this->assertTrue($payload->hasChainedJobs());
         $chainedJobs = $payload->getChainedJobs();
         $this->assertCount(1, $chainedJobs);
+        $this->assertInstanceOf(PayloadCollection::class, $chainedJobs);
 
         $nextJob = $chainedJobs->shift();
+        $this->assertInstanceOf(Payload::class, $nextJob);
         $this->assertSame('nextJob', $nextJob->getJob());
         $this->assertSame(['nextKey' => 'nextValue'], $nextJob->getData());
         $this->assertSame('nextQueue', $nextJob->getQueue());

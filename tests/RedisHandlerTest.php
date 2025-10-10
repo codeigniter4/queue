@@ -301,6 +301,7 @@ final class RedisHandlerTest extends TestCase
             'queue'      => 'queue1',
         ]);
     }
+
     public function testDone(): void
     {
         $handler  = new RedisHandler($this->config);
@@ -314,6 +315,7 @@ final class RedisHandlerTest extends TestCase
         $this->assertTrue($result);
         $this->assertFalse($redis->hExists('queues:queue1::reserved', (string) $queueJob->id));
     }
+
     public function testClear(): void
     {
         $handler = new RedisHandler($this->config);
@@ -327,6 +329,7 @@ final class RedisHandlerTest extends TestCase
         $result = $handler->clear('queue1');
         $this->assertTrue($result);
     }
+
     public function testClearAll(): void
     {
         $handler = new RedisHandler($this->config);
@@ -340,6 +343,7 @@ final class RedisHandlerTest extends TestCase
         $result = $handler->clear();
         $this->assertTrue($result);
     }
+
     public function testRetry(): void
     {
         $handler = new RedisHandler($this->config);

@@ -64,6 +64,7 @@ class ChainBuilder
         }
 
         // Set chained jobs for the next job
+        // @phpstan-ignore greater.alwaysTrue
         if ($this->payloads->count() > 0) {
             $current->setChainedJobs($this->payloads);
         }
