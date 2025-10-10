@@ -77,4 +77,5 @@ nav:
   - Basic usage: basic-usage.md
   - Running queues: running-queues.md
   - Commands: commands.md
+  - Events: events.md
   - Troubleshooting: troubleshooting.md

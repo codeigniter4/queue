@@ -46,6 +46,7 @@ If you use `RabbitMQ` (you still need a relational database to store failed jobs
 * [Basic usage](basic-usage.md)
 * [Running queues](running-queues.md)
 * [Commands](commands.md)
+* [Events](events.md)
 * [Troubleshooting](troubleshooting.md)
 
 ### Acknowledgements
