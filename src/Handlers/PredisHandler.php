@@ -19,12 +19,14 @@ use CodeIgniter\I18n\Time;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
+use CodeIgniter\Queue\Events\QueueEventManager;
 use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use CodeIgniter\Queue\QueuePushResult;
 use Exception;
 use Predis\Client;
+use RuntimeException;
 use Throwable;
 
 class PredisHandler extends BaseHandler implements QueueInterface
@@ -44,7 +46,20 @@ class PredisHandler extends BaseHandler implements QueueInterface
                 throw new CriticalError('Queue: LUA script for Predis is not available.');
             }
             $this->luaScript = file_get_contents($luaScript);
+
+            // Emit connection established event
+            QueueEventManager::handlerConnectionEstablished(
+                handler: $this->name(),
+                config: $config->predis,
+            );
         } catch (Exception $e) {
+            // Emit connection failed event
+            QueueEventManager::handlerConnectionFailed(
+                handler: $this->name(),
+                exception: $e,
+                config: $config->predis,
+            );
+
             throw new CriticalError('Queue: Predis connection refused (' . $e->getMessage() . ').');
         }
     }
@@ -82,16 +97,38 @@ class PredisHandler extends BaseHandler implements QueueInterface
         try {
             $result = $this->predis->zadd("queues:{$queue}:{$this->priority}", [json_encode($queueJob) => $availableAt->timestamp]);
         } catch (Throwable $e) {
+            // Emit push failed event
+            QueueEventManager::jobPushFailed(
+                handler: $this->name(),
+                queue: $queue,
+                jobClass: $job,
+                exception: $e,
+            );
+
             return QueuePushResult::failure('Unexpected Redis error: ' . $e->getMessage());
         } finally {
             $this->priority = $this->delay = null;
         }
 
-        $this->priority = $this->delay = null;
+        if ($result > 0) {
+            // Emit job pushed event
+            QueueEventManager::jobPushed(
+                handler: $this->name(),
+                queue: $queue,
+                job: $queueJob,
+            );
 
-        return $result > 0
-            ? QueuePushResult::success($jobId)
-            : QueuePushResult::failure('Job already exists in the queue.');
+            return QueuePushResult::success($jobId);
+        }
+        $error = new RuntimeException('Job already exists in the queue.');
+        QueueEventManager::jobPushFailed(
+            handler: $this->name(),
+            queue: $queue,
+            jobClass: $job,
+            exception: $error,
+        );
+
+        return QueuePushResult::failure($error->getMessage());
     }
 
     /**
@@ -171,19 +208,21 @@ class PredisHandler extends BaseHandler implements QueueInterface
     public function clear(?string $queue = null): bool
     {
         if ($queue !== null) {
-            $keys = $this->predis->keys("queues:{$queue}:*");
-            if ($keys !== []) {
-                return $this->predis->del($keys) > 0;
-            }
-
-            return true;
+            $keys   = $this->predis->keys("queues:{$queue}:*");
+            $result = $keys !== [] ? $this->predis->del($keys) > 0 : true;
+        } else {
+            $keys   = $this->predis->keys('queues:*');
+            $result = $keys !== [] ? $this->predis->del($keys) > 0 : true;
         }
 
-        $keys = $this->predis->keys('queues:*');
-        if ($keys !== []) {
-            return $this->predis->del($keys) > 0;
+        if ($result) {
+            // Emit queue cleared event
+            QueueEventManager::queueCleared(
+                handler: $this->name(),
+                queue: $queue,
+            );
         }
 
-        return true;
+        return $result;
     }
 }

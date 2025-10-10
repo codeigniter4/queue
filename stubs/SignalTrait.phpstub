@@ -1,0 +1,132 @@
+<?php
+
+declare(strict_types=1);
+
+namespace CodeIgniter\Queue\Compatibility;
+
+use Closure;
+
+/**
+ * Psalm stub for SignalTrait to handle conditional trait declaration
+ *
+ * This stub provides type information for Psalm when analyzing code that uses
+ * the SignalTrait compatibility layer. When CodeIgniter 4.7+ is installed,
+ * the actual trait from CodeIgniter\CLI\SignalTrait will be used instead.
+ *
+ * If this package starts requiring CI 4.7+, you can remove this stub and
+ * the ignoreFiles entry in psalm.xml for src/Compatibility/SignalTrait.php
+ */
+trait SignalTrait
+{
+    private bool $running = true;
+    private bool $signalsBlocked = false;
+
+    /** @var list<int> */
+    private array $registeredSignals = [];
+
+    /** @var array<int, string> */
+    private array $signalMethodMap = [];
+
+    private static ?bool $isPcntlAvailable = null;
+    private static ?bool $isPosixAvailable = null;
+
+    protected function isPcntlAvailable(): bool
+    {
+    }
+
+    protected function isPosixAvailable(): bool
+    {
+    }
+
+    /**
+     * @param list<int> $signals
+     * @param array<int, string> $methodMap
+     */
+    protected function registerSignals(array $signals = [SIGTERM, SIGINT, SIGHUP, SIGQUIT], array $methodMap = []): void
+    {
+    }
+
+    protected function handleSignal(int $signal): void
+    {
+    }
+
+    protected function shouldTerminate(): bool
+    {
+    }
+
+    protected function isRunning(): bool
+    {
+    }
+
+    protected function requestTermination(): void
+    {
+    }
+
+    protected function resetState(): void
+    {
+    }
+
+    /**
+     * @template TReturn
+     * @param Closure():TReturn $operation
+     * @return TReturn
+     */
+    protected function withSignalsBlocked(Closure $operation)
+    {
+    }
+
+    protected function blockSignals(): void
+    {
+    }
+
+    protected function unblockSignals(): void
+    {
+    }
+
+    protected function signalsBlocked(): bool
+    {
+    }
+
+    protected function mapSignal(int $signal, string $method): void
+    {
+    }
+
+    protected function getSignalName(int $signal): string
+    {
+    }
+
+    protected function unregisterSignals(): void
+    {
+    }
+
+    protected function hasSignals(): bool
+    {
+    }
+
+    /**
+     * @return list<int>
+     */
+    protected function getSignals(): array
+    {
+    }
+
+    /**
+     * @return array{
+     *      pid: int,
+     *      running: bool,
+     *      pcntl_available: bool,
+     *      registered_signals: int,
+     *      registered_signals_names: array<int, string>,
+     *      signals_blocked: bool,
+     *      explicit_mappings: int,
+     *      memory_usage_mb: float,
+     *      memory_peak_mb: float,
+     *      session_id?: false|int,
+     *      process_group?: false|int,
+     *      has_controlling_terminal?: bool
+     *  }
+     */
+    protected function getProcessState(): array
+    {
+    }
+}

@@ -77,6 +77,7 @@
             <directory suffix=".php">./src/</directory>
         </include>
         <exclude>
+            <file>./src/Compatibility/SignalTrait.php</file>
             <directory suffix=".php">./src/Commands/Generators</directory>
             <directory suffix=".php">./src/Commands/Utils</directory>
             <directory suffix=".php">./src/Config</directory>

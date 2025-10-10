@@ -15,20 +15,29 @@ namespace CodeIgniter\Queue\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\Queue\Compatibility\SignalTrait;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
+use CodeIgniter\Queue\Events\QueueEventManager;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use Exception;
 use Throwable;
 
 class QueueWork extends BaseCommand
 {
+    use SignalTrait;
+
     /**
      * The Command's Group
      *
      * @var string
      */
     protected $group = 'Queue';
+
+    /**
+     * Worker ID for tracking this worker instance
+     */
+    private string $workerId;
 
     /**
      * The Command's Name
@@ -126,6 +135,9 @@ class QueueWork extends BaseCommand
 
         $startTime = microtime(true);
 
+        // Generate unique worker ID
+        $this->workerId = sprintf('worker-%s-%d', gethostname(), getmypid());
+
         CLI::write('Listening for the jobs with the queue: ' . CLI::color($queue, 'light_cyan'), 'cyan');
 
         if ($priority !== 'default') {
@@ -134,14 +146,37 @@ class QueueWork extends BaseCommand
 
         CLI::write(PHP_EOL);
 
+        // Convert priority string to array
         $priority = array_map('trim', explode(',', (string) $priority));
 
-        while (true) {
+        // Register signals for graceful shutdown
+        $this->registerSignals();
+
+        // Emit worker started event
+        QueueEventManager::workerStarted(
+            handler: service('queue')->name(),
+            queue: $queue,
+            priorities: $priority,
+            config: [
+                'max_jobs'     => $maxJobs,
+                'max_time'     => $maxTime,
+                'memory_limit' => $memory . 'MB',
+                'sleep'        => $sleep,
+                'rest'         => $rest,
+            ],
+            metadata: [
+                'worker_id' => $this->workerId,
+            ],
+        );
+
+        while ($this->isRunning()) {
             $work = service('queue')->pop($queue, $priority);
 
             if ($work === null) {
                 if ($stopWhenEmpty) {
                     CLI::write('No job available. Stopping.', 'yellow');
+
+                    $this->emitWorkerStoppedEvent($queue, $priority, $startTime, $countJobs, 'empty_queue');
 
                     return EXIT_SUCCESS;
                 }
@@ -154,14 +189,26 @@ class QueueWork extends BaseCommand
                 sleep((int) $sleep);
 
                 if ($this->checkMemory($memory)) {
+                    $this->emitWorkerStoppedEvent($queue, $priority, $startTime, $countJobs, 'memory_limit');
+
+                    return EXIT_SUCCESS;
+                }
+
+                if ($this->shouldTerminate()) {
+                    $this->emitWorkerStoppedEvent($queue, $priority, $startTime, $countJobs, 'signal_stop');
+
                     return EXIT_SUCCESS;
                 }
 
                 if ($this->checkStop($queue, $startTime)) {
+                    $this->emitWorkerStoppedEvent($queue, $priority, $startTime, $countJobs, 'planned_stop');
+
                     return EXIT_SUCCESS;
                 }
 
                 if ($this->maxTimeCheck($maxTime, $startTime)) {
+                    $this->emitWorkerStoppedEvent($queue, $priority, $startTime, $countJobs, 'time_limit');
+
                     return EXIT_SUCCESS;
                 }
             } else {
@@ -175,19 +222,33 @@ class QueueWork extends BaseCommand
 
                 $this->handleWork($work, $config, $tries, $retryAfter);
 
+                if ($this->shouldTerminate()) {
+                    $this->emitWorkerStoppedEvent($queue, $priority, $startTime, $countJobs, 'signal_stop');
+
+                    return EXIT_SUCCESS;
+                }
+
                 if ($this->checkMemory($memory)) {
+                    $this->emitWorkerStoppedEvent($queue, $priority, $startTime, $countJobs, 'memory_limit');
+
                     return EXIT_SUCCESS;
                 }
 
                 if ($this->checkStop($queue, $startTime)) {
+                    $this->emitWorkerStoppedEvent($queue, $priority, $startTime, $countJobs, 'planned_stop');
+
                     return EXIT_SUCCESS;
                 }
 
                 if ($this->maxJobsCheck($maxJobs, $countJobs)) {
+                    $this->emitWorkerStoppedEvent($queue, $priority, $startTime, $countJobs, 'job_limit');
+
                     return EXIT_SUCCESS;
                 }
 
                 if ($this->maxTimeCheck($maxTime, $startTime)) {
+                    $this->emitWorkerStoppedEvent($queue, $priority, $startTime, $countJobs, 'time_limit');
+
                     return EXIT_SUCCESS;
                 }
 
@@ -237,9 +298,20 @@ class QueueWork extends BaseCommand
     private function handleWork(QueueJob $work, QueueConfig $config, ?int $tries, ?int $retryAfter): void
     {
         timer()->start('work');
-        $payload = $work->payload;
+        $startTime = microtime(true);
+        $payload   = $work->payload;
 
         $payloadMetadata = null;
+
+        // Emit job processing started event
+        QueueEventManager::jobProcessingStarted(
+            handler: service('queue')->name(),
+            queue: $work->queue,
+            job: $work,
+            metadata: [
+                'worker_id' => $this->workerId,
+            ],
+        );
 
         try {
             // Load payload metadata
@@ -253,7 +325,18 @@ class QueueWork extends BaseCommand
             $job->process();
 
             // Mark as done
-            service('queue')->done($work, $config->keepDoneJobs);
+            service('queue')->done($work);
+
+            // Emit job processing completed event
+            QueueEventManager::jobProcessingCompleted(
+                handler: service('queue')->name(),
+                queue: $work->queue,
+                job: $work,
+                processingTime: microtime(true) - $startTime,
+                metadata: [
+                    'worker_id' => $this->workerId,
+                ],
+            );
 
             CLI::write('The processing of this job was successful', 'green');
 
@@ -265,6 +348,17 @@ class QueueWork extends BaseCommand
                 service('queue')->later($work, $retryAfter ?? $job->getRetryAfter());
             } else {
                 // Mark as failed
+                QueueEventManager::jobFailed(
+                    handler: service('queue')->name(),
+                    queue: $work->queue,
+                    job: $work,
+                    exception: $err,
+                    processingTime: microtime(true) - $startTime,
+                    metadata: [
+                        'worker_id' => $this->workerId,
+                    ],
+                );
+
                 service('queue')->failed($work, $err, $config->keepFailedJobs);
             }
             CLI::write('The processing of this job failed', 'red');
@@ -394,5 +488,37 @@ class QueueWork extends BaseCommand
         }
 
         return false;
+    }
+
+    /**
+     * Handle interruption
+     */
+    private function onInterruption(int $signal): void
+    {
+        $this->requestTermination();
+
+        CLI::write(sprintf('The termination of this worker has been requested with: %s.', $this->getSignalName($signal)), 'yellow');
+    }
+
+    /**
+     * Emit worker stopped event with runtime statistics
+     */
+    private function emitWorkerStoppedEvent(string $queue, array $priorities, float $startTime, int $jobsProcessed, string $reason): void
+    {
+        $uptime = microtime(true) - $startTime;
+
+        QueueEventManager::workerStopped(
+            handler: service('queue')->name(),
+            queue: $queue,
+            priorities: $priorities,
+            uptime: $uptime,
+            jobsProcessed: $jobsProcessed,
+            metadata: [
+                'worker_id'    => $this->workerId,
+                'stop_reason'  => $reason,
+                'memory_usage' => memory_get_usage(true),
+                'memory_peak'  => memory_get_peak_usage(true),
+            ],
+        );
     }
 }

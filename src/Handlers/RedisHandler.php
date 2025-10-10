@@ -19,12 +19,14 @@ use CodeIgniter\I18n\Time;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
+use CodeIgniter\Queue\Events\QueueEventManager;
 use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use CodeIgniter\Queue\QueuePushResult;
 use Redis;
 use RedisException;
+use RuntimeException;
 use Throwable;
 
 class RedisHandler extends BaseHandler implements QueueInterface
@@ -62,7 +64,20 @@ class RedisHandler extends BaseHandler implements QueueInterface
                 throw new CriticalError('Queue: LUA script for Redis is not available.');
             }
             $this->luaScript = file_get_contents($luaScript);
+
+            // Emit connection established event
+            QueueEventManager::handlerConnectionEstablished(
+                handler: $this->name(),
+                config: $config->redis,
+            );
         } catch (RedisException $e) {
+            // Emit connection failed event
+            QueueEventManager::handlerConnectionFailed(
+                handler: $this->name(),
+                exception: $e,
+                config: $config->redis,
+            );
+
             throw new CriticalError('Queue: RedisException occurred with message (' . $e->getMessage() . ').');
         }
     }
@@ -102,18 +117,50 @@ class RedisHandler extends BaseHandler implements QueueInterface
         try {
             $result = $this->redis->zAdd("queues:{$queue}:{$this->priority}", $availableAt->timestamp, json_encode($queueJob));
         } catch (Throwable $e) {
+            // Emit push failed event
+            QueueEventManager::jobPushFailed(
+                handler: $this->name(),
+                queue: $queue,
+                jobClass: $job,
+                exception: $e,
+            );
+
             return QueuePushResult::failure('Unexpected Redis error: ' . $e->getMessage());
         } finally {
             $this->priority = $this->delay = null;
         }
 
         if ($result === false) {
-            return QueuePushResult::failure('Failed to add job to Redis.');
+            $error = new RuntimeException('Failed to add job to Redis.');
+            QueueEventManager::jobPushFailed(
+                handler: $this->name(),
+                queue: $queue,
+                jobClass: $job,
+                exception: $error,
+            );
+
+            return QueuePushResult::failure($error->getMessage());
         }
 
-        return (int) $result > 0
-            ? QueuePushResult::success($jobId)
-            : QueuePushResult::failure('Job already exists in the queue.');
+        if ((int) $result > 0) {
+            // Emit job pushed event
+            QueueEventManager::jobPushed(
+                handler: $this->name(),
+                queue: $queue,
+                job: $queueJob,
+            );
+
+            return QueuePushResult::success($jobId);
+        }
+        $error = new RuntimeException('Job already exists in the queue.');
+        QueueEventManager::jobPushFailed(
+            handler: $this->name(),
+            queue: $queue,
+            jobClass: $job,
+            exception: $error,
+        );
+
+        return QueuePushResult::failure($error->getMessage());
     }
 
     /**
@@ -202,17 +249,21 @@ class RedisHandler extends BaseHandler implements QueueInterface
     public function clear(?string $queue = null): bool
     {
         if ($queue !== null) {
-            if ($keys = $this->redis->keys("queues:{$queue}:*")) {
-                return (int) $this->redis->del($keys) > 0;
-            }
-
-            return true;
+            $result = ($keys = $this->redis->keys("queues:{$queue}:*")) ? (int) $this->redis->del($keys) > 0 : true;
+        } elseif ($keys = $this->redis->keys('queues:*')) {
+            $result = (int) $this->redis->del($keys) > 0;
+        } else {
+            $result = true;
         }
 
-        if ($keys = $this->redis->keys('queues:*')) {
-            return (int) $this->redis->del($keys) > 0;
+        if ($result) {
+            // Emit queue cleared event
+            QueueEventManager::queueCleared(
+                handler: $this->name(),
+                queue: $queue,
+            );
         }
 
-        return true;
+        return $result;
     }
 }
