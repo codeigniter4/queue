@@ -17,13 +17,13 @@ use CodeIgniter\Entity\Entity;
 use CodeIgniter\I18n\Time;
 
 /**
- * @property int    $id
  * @property string $connection
- * @property string $queue
- * @property array  $payload
- * @property string $priority
  * @property string $exceptions
  * @property Time   $failed_at
+ * @property int    $id
+ * @property array  $payload
+ * @property string $priority
+ * @property string $queue
  */
 class QueueJobFailed extends Entity
 {
