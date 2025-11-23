@@ -29,6 +29,7 @@ use Rector\EarlyReturn\Rector\If_\RemoveAlwaysElseRector;
 use Rector\EarlyReturn\Rector\Return_\PreparedValueToEarlyReturnRector;
 use Rector\Php55\Rector\String_\StringClassNameToClassConstantRector;
 use Rector\Php73\Rector\FuncCall\StringifyStrNeedlesRector;
+use Rector\Php81\Rector\ClassMethod\NewInInitializerRector;
 use Rector\PHPUnit\AnnotationsToAttributes\Rector\Class_\AnnotationWithValueToAttributeRector;
 use Rector\PHPUnit\AnnotationsToAttributes\Rector\ClassMethod\DataProviderAnnotationToAttributeRector;
 use Rector\PHPUnit\CodeQuality\Rector\Class_\YieldDataProviderRector;
@@ -101,6 +102,11 @@ return static function (RectorConfig $rectorConfig): void {
         // Skip onInterruption method - called dynamically via reflection in SignalTrait
         RemoveUnusedPrivateMethodRector::class => [
             __DIR__ . '/src/Commands/QueueWork.php',
+        ],
+
+        // Skip for PayloadMetadata in the constructor
+        NewInInitializerRector::class => [
+            __DIR__ . '/src/Payloads/Payload.php',
         ],
     ]);
 

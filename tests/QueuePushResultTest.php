@@ -23,7 +23,7 @@ final class QueuePushResultTest extends TestCase
 {
     public function testConstructorSuccess(): void
     {
-        $result = new QueuePushResult(true, 123456, null);
+        $result = new QueuePushResult(true, 123456);
 
         $this->assertTrue($result->getStatus());
         $this->assertSame(123456, $result->getJobId());

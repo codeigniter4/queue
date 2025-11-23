@@ -147,7 +147,7 @@ class QueueWork extends BaseCommand
         CLI::write(PHP_EOL);
 
         // Convert priority string to array
-        $priority = array_map('trim', explode(',', (string) $priority));
+        $priority = array_map(trim(...), explode(',', (string) $priority));
 
         // Register signals for graceful shutdown
         $this->registerSignals();
