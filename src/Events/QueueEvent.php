@@ -175,9 +175,9 @@ class QueueEvent
     /**
      * Get processing time in milliseconds (for job events)
      */
-    public function getProcessingTimeMs(): float
+    public function getProcessingTimeMs(): int
     {
-        return $this->getProcessingTime() * 1000;
+        return (int) ($this->getProcessingTime() * 1000);
     }
 
     /**

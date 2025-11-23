@@ -205,7 +205,7 @@ final class QueueEventTest extends TestCase
         $metadata = ['processing_time' => 1.5];
         $event    = new QueueEvent('queue.job.completed', 'database', metadata: $metadata);
 
-        $this->assertEqualsWithDelta(1500.0, $event->getProcessingTimeMs(), PHP_FLOAT_EPSILON);
+        $this->assertSame(1500, $event->getProcessingTimeMs());
     }
 
     public function testGetExceptionAndExceptionMessage(): void
