@@ -123,7 +123,7 @@ jobs:
           RABBITMQ_DEFAULT_USER: guest
           RABBITMQ_DEFAULT_PASS: guest
         ports:
-          - 5672
+          - 5672:5672
         options: >-
           --health-cmd="rabbitmq-diagnostics -q ping"
           --health-interval=10s

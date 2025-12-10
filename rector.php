@@ -21,6 +21,7 @@ use Rector\CodingStyle\Rector\ClassMethod\FuncGetArgsToVariadicParamRector;
 use Rector\CodingStyle\Rector\ClassMethod\MakeInheritedMethodVisibilitySameAsParentRector;
 use Rector\CodingStyle\Rector\FuncCall\CountArrayToEmptyArrayComparisonRector;
 use Rector\Config\RectorConfig;
+use Rector\DeadCode\Rector\ClassMethod\RemoveUnusedPrivateMethodRector;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUnusedPromotedPropertyRector;
 use Rector\EarlyReturn\Rector\Foreach_\ChangeNestedForeachIfsToEarlyContinueRector;
 use Rector\EarlyReturn\Rector\If_\ChangeIfElseValueAssignToEarlyReturnRector;
@@ -32,6 +33,7 @@ use Rector\Php81\Rector\ClassMethod\NewInInitializerRector;
 use Rector\PHPUnit\AnnotationsToAttributes\Rector\Class_\AnnotationWithValueToAttributeRector;
 use Rector\PHPUnit\AnnotationsToAttributes\Rector\ClassMethod\DataProviderAnnotationToAttributeRector;
 use Rector\PHPUnit\CodeQuality\Rector\Class_\YieldDataProviderRector;
+use Rector\PHPUnit\CodeQuality\Rector\MethodCall\AssertEmptyNullableObjectToAssertInstanceofRector;
 use Rector\PHPUnit\Set\PHPUnitSetList;
 use Rector\Privatization\Rector\Property\PrivatizeFinalClassPropertyRector;
 use Rector\Set\ValueObject\LevelSetList;
@@ -95,8 +97,16 @@ return static function (RectorConfig $rectorConfig): void {
         // Supported from PHPUnit 10
         DataProviderAnnotationToAttributeRector::class,
 
+        AssertEmptyNullableObjectToAssertInstanceofRector::class,
+
+        // Skip onInterruption method - called dynamically via reflection in SignalTrait
+        RemoveUnusedPrivateMethodRector::class => [
+            __DIR__ . '/src/Commands/QueueWork.php',
+        ],
+
+        // Skip for PayloadMetadata in the constructor
         NewInInitializerRector::class => [
-            'src/Payloads/Payload.php',
+            __DIR__ . '/src/Payloads/Payload.php',
         ],
     ]);
 

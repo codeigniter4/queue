@@ -18,6 +18,7 @@ use CodeIgniter\I18n\Time;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
+use CodeIgniter\Queue\Events\QueueEventManager;
 use CodeIgniter\Queue\Exceptions\QueueException;
 use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Payloads\Payload;
@@ -68,7 +69,20 @@ class RabbitMQHandler extends BaseHandler implements QueueInterface
             $this->channel->set_return_listener(static function ($replyCode, $replyText, $exchange, $routingKey, $properties, $body): void {
                 log_message('error', "RabbitMQ returned unroutable message: {$replyCode} {$replyText} exchange={$exchange} routing_key={$routingKey}");
             });
+
+            // Emit connection established event
+            QueueEventManager::handlerConnectionEstablished(
+                handler: $this->name(),
+                config: $config->rabbitmq,
+            );
         } catch (Throwable $e) {
+            // Emit connection failed event
+            QueueEventManager::handlerConnectionFailed(
+                handler: $this->name(),
+                exception: $e,
+                config: $config->rabbitmq,
+            );
+
             throw new CriticalError('Queue: RabbitMQ connection failed. ' . $e->getMessage());
         }
     }
@@ -138,8 +152,23 @@ class RabbitMQHandler extends BaseHandler implements QueueInterface
 
             $this->priority = $this->delay = null;
 
+            // Emit job pushed event
+            QueueEventManager::jobPushed(
+                handler: $this->name(),
+                queue: $queue,
+                job: $queueJob,
+            );
+
             return QueuePushResult::success($jobId);
         } catch (Throwable $e) {
+            // Emit push failed event
+            QueueEventManager::jobPushFailed(
+                handler: $this->name(),
+                queue: $queue,
+                jobClass: $job,
+                exception: $e,
+            );
+
             return QueuePushResult::failure($e->getMessage());
         }
     }
@@ -222,19 +251,12 @@ class RabbitMQHandler extends BaseHandler implements QueueInterface
     /**
      * Mark job as completed.
      */
-    public function done(QueueJob $queueJob, bool $keepJob): bool
+    public function done(QueueJob $queueJob): bool
     {
         try {
             // Acknowledge the message to remove it from the queue
             if (isset($queueJob->amqpDeliveryTag)) {
                 $this->channel->basic_ack($queueJob->amqpDeliveryTag);
-            }
-
-            if ($keepJob) {
-                // For RabbitMQ, we don't need to persist completed jobs anywhere
-                // as the message is already acknowledged and removed from the queue
-                // @TODO remove the $keepDoneJobs option entirely
-                $queueJob->status = Status::DONE->value;
             }
 
             return true;
@@ -259,6 +281,12 @@ class RabbitMQHandler extends BaseHandler implements QueueInterface
             } else {
                 $this->clearQueue($queue);
             }
+
+            // Emit queue cleared event
+            QueueEventManager::queueCleared(
+                handler: $this->name(),
+                queue: $queue,
+            );
 
             return true;
         } catch (Throwable $e) {

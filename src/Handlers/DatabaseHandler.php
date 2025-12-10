@@ -13,16 +13,19 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Queue\Handlers;
 
+use CodeIgniter\Exceptions\CriticalError;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
+use CodeIgniter\Queue\Events\QueueEventManager;
 use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Models\QueueJobModel;
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use CodeIgniter\Queue\QueuePushResult;
 use ReflectionException;
+use RuntimeException;
 use Throwable;
 
 class DatabaseHandler extends BaseHandler implements QueueInterface
@@ -31,8 +34,25 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
 
     public function __construct(protected QueueConfig $config)
     {
-        $connection     = db_connect($config->database['dbGroup'], $config->database['getShared']);
-        $this->jobModel = model(QueueJobModel::class, true, $connection);
+        try {
+            $connection     = db_connect($config->database['dbGroup'], $config->database['getShared']);
+            $this->jobModel = model(QueueJobModel::class, true, $connection);
+
+            // Emit connection established event
+            QueueEventManager::handlerConnectionEstablished(
+                handler: $this->name(),
+                config: $config->database,
+            );
+        } catch (Throwable $e) {
+            // Emit connection failed event
+            QueueEventManager::handlerConnectionFailed(
+                handler: $this->name(),
+                exception: $e,
+                config: $config->database,
+            );
+
+            throw new CriticalError('Queue: Database connection failed. ' . $e->getMessage());
+        }
     }
 
     /**
@@ -64,12 +84,38 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
         try {
             $jobId = $this->jobModel->insert($queueJob);
         } catch (Throwable $e) {
+            // Emit push failed event
+            QueueEventManager::jobPushFailed(
+                handler: $this->name(),
+                queue: $queue,
+                jobClass: $job,
+                exception: $e,
+            );
+
             return QueuePushResult::failure($e->getMessage());
         }
 
         if ($jobId === 0) {
-            return QueuePushResult::failure('Failed to insert job into the database.');
+            $err = new RuntimeException('Failed to insert job into the database.');
+            QueueEventManager::jobPushFailed(
+                handler: $this->name(),
+                queue: $queue,
+                jobClass: $job,
+                exception: $err,
+            );
+
+            return QueuePushResult::failure($err->getMessage());
         }
+
+        // Set the job ID for the successful push event
+        $queueJob->id = $jobId;
+
+        // Emit job pushed event
+        QueueEventManager::jobPushed(
+            handler: $this->name(),
+            queue: $queue,
+            job: $queueJob,
+        );
 
         return QueuePushResult::success($jobId);
     }
@@ -122,16 +168,10 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
     }
 
     /**
-     * Change job status to DONE od delete it.
-     *
-     * @throws ReflectionException
+     * Change job status to DONE or delete it.
      */
-    public function done(QueueJob $queueJob, bool $keepJob): bool
+    public function done(QueueJob $queueJob): bool
     {
-        if ($keepJob) {
-            return $this->jobModel->update($queueJob->id, ['status' => Status::DONE->value]);
-        }
-
         return $this->jobModel->delete($queueJob->id);
     }
 
@@ -144,6 +184,16 @@ class DatabaseHandler extends BaseHandler implements QueueInterface
             $this->jobModel->where('queue', $queue);
         }
 
-        return $this->jobModel->delete();
+        $result = $this->jobModel->delete();
+
+        if ($result) {
+            // Emit queue cleared event
+            QueueEventManager::queueCleared(
+                handler: $this->name(),
+                queue: $queue,
+            );
+        }
+
+        return $result;
     }
 }

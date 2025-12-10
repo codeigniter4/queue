@@ -11,7 +11,7 @@ declare(strict_types=1);
  * the LICENSE file that was distributed with this source code.
  */
 
-namespace App\ThirdParty\queue\tests\Payloads;
+namespace Tests\Payloads;
 
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadCollection;
@@ -195,6 +195,7 @@ final class PayloadMetadataTest extends TestCase
         $this->assertCount(2, $chainedJobs);
 
         $job1 = $chainedJobs->shift();
+        $this->assertInstanceOf(Payload::class, $job1);
         $this->assertSame('job1', $job1->getJob());
         $this->assertSame(['key1' => 'value1'], $job1->getData());
         $this->assertSame('queue1', $job1->getQueue());

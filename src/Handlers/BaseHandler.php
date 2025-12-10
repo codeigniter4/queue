@@ -48,7 +48,7 @@ abstract class BaseHandler
 
     abstract public function failed(QueueJob $queueJob, Throwable $err, bool $keepJob): bool;
 
-    abstract public function done(QueueJob $queueJob, bool $keepJob): bool;
+    abstract public function done(QueueJob $queueJob): bool;
 
     abstract public function clear(?string $queue = null): bool;
 

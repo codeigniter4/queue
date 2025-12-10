@@ -15,13 +15,12 @@ namespace Tests;
 
 use CodeIgniter\Exceptions\CriticalError;
 use CodeIgniter\Queue\Entities\QueueJob;
-use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Exceptions\QueueException;
 use CodeIgniter\Queue\Handlers\RabbitMQHandler;
 use CodeIgniter\Queue\QueuePushResult;
 use CodeIgniter\Test\ReflectionHelper;
 use Exception;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Connection\AMQPConnectionFactory;
 use Tests\Support\Config\Queue as QueueConfig;
 use Tests\Support\TestCase;
 use Throwable;
@@ -133,7 +132,7 @@ final class RabbitMQHandlerTest extends TestCase
             $this->assertSame(['message' => 'Test Pop'], $job->payload['data']);
 
             // Clean up - mark as done
-            $this->handler->done($job, false);
+            $this->handler->done($job);
         }
     }
 
@@ -153,7 +152,7 @@ final class RabbitMQHandlerTest extends TestCase
 
         if ($job !== null) {
             $this->assertSame('high', $job->priority);
-            $this->handler->done($job, false);
+            $this->handler->done($job);
         }
     }
 
@@ -245,21 +244,21 @@ final class RabbitMQHandlerTest extends TestCase
         $job = $this->handler->pop('custom-priority-queue', ['urgent', 'normal', 'low']);
         if ($job !== null) {
             $this->assertSame('urgent', $job->payload['data']['priority']);
-            $this->handler->done($job, false);
+            $this->handler->done($job);
         }
 
         // Then normal priority
         $job = $this->handler->pop('custom-priority-queue', ['urgent', 'normal', 'low']);
         if ($job !== null) {
             $this->assertSame('normal', $job->payload['data']['priority']);
-            $this->handler->done($job, false);
+            $this->handler->done($job);
         }
 
         // Finally low priority
         $job = $this->handler->pop('custom-priority-queue', ['urgent', 'normal', 'low']);
         if ($job !== null) {
             $this->assertSame('low', $job->payload['data']['priority']);
-            $this->handler->done($job, false);
+            $this->handler->done($job);
         }
     }
 
@@ -321,27 +320,14 @@ final class RabbitMQHandlerTest extends TestCase
         ]);
     }
 
-    public function testDoneAndKeepJob(): void
+    public function testDone(): void
     {
         $this->handler->push('test-queue', 'success', ['test' => 'data']);
         $queueJob = $this->handler->pop('test-queue', ['default']);
 
         $this->assertInstanceOf(QueueJob::class, $queueJob);
 
-        $result = $this->handler->done($queueJob, true);
-
-        $this->assertTrue($result);
-        $this->assertSame(Status::DONE->value, $queueJob->status);
-    }
-
-    public function testDoneAndDontKeepJob(): void
-    {
-        $this->handler->push('test-queue', 'success', ['test' => 'data']);
-        $queueJob = $this->handler->pop('test-queue', ['default']);
-
-        $this->assertInstanceOf(QueueJob::class, $queueJob);
-
-        $result = $this->handler->done($queueJob, false);
+        $result = $this->handler->done($queueJob);
 
         // Job is acknowledged and removed from RabbitMQ
         $this->assertTrue($result);
@@ -397,6 +383,6 @@ final class RabbitMQHandlerTest extends TestCase
      */
     private function isRabbitMQAvailable(): bool
     {
-        return class_exists(AMQPStreamConnection::class);
+        return class_exists(AMQPConnectionFactory::class);
     }
 }

@@ -403,29 +403,12 @@ final class DatabaseHandlerTest extends TestCase
     /**
      * @throws ReflectionException
      */
-    public function testDoneAndKeepJob(): void
+    public function testDone(): void
     {
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
 
-        $result = $handler->done($queueJob, true);
-
-        $this->assertTrue($result);
-        $this->seeInDatabase('queue_jobs', [
-            'id'     => 2,
-            'status' => Status::DONE->value,
-        ]);
-    }
-
-    /**
-     * @throws ReflectionException
-     */
-    public function testDoneAndDontKeepJob(): void
-    {
-        $handler  = new DatabaseHandler($this->config);
-        $queueJob = $handler->pop('queue1', ['default']);
-
-        $result = $handler->done($queueJob, false);
+        $result = $handler->done($queueJob);
 
         $this->assertTrue($result);
         $this->dontSeeInDatabase('queue_jobs', [
