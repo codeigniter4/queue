@@ -38,17 +38,17 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     strategy:
       matrix:
-        php-versions: ['8.1', '8.2', '8.3']
+        php-versions: ['8.2', '8.3', '8.4']
         db-platforms: ['MySQLi', 'SQLite3']
         include:
           # Postgre
-          - php-versions: '8.1'
+          - php-versions: '8.2'
             db-platforms: Postgre
           # SQLSRV
-          - php-versions: '8.1'
+          - php-versions: '8.2'
             db-platforms: SQLSRV
           # OCI8
-          - php-versions: '8.1'
+          - php-versions: '8.2'
             db-platforms: OCI8
 
     services:
