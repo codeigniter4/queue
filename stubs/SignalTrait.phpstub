@@ -42,7 +42,7 @@ trait SignalTrait
      * @param list<int> $signals
      * @param array<int, string> $methodMap
      */
-    protected function registerSignals(array $signals = [SIGTERM, SIGINT, SIGHUP, SIGQUIT], array $methodMap = []): void
+    protected function registerSignals(array $signals = [], array $methodMap = []): void
     {
     }
 

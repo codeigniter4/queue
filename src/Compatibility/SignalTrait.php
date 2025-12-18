@@ -104,11 +104,15 @@ if (trait_exists('CodeIgniter\CLI\SignalTrait')) {
          * @param array<int, string> $methodMap Optional signal-to-method mapping
          */
         protected function registerSignals(
-            array $signals = [SIGTERM, SIGINT, SIGHUP, SIGQUIT],
+            array $signals = [],
             array $methodMap = [],
         ): void {
             if (! $this->isPcntlAvailable()) {
                 return;
+            }
+
+            if ($signals === []) {
+                $signals = [SIGTERM, SIGINT, SIGHUP, SIGQUIT];
             }
 
             if (! $this->isPosixAvailable() && (in_array(SIGTSTP, $signals, true) || in_array(SIGCONT, $signals, true))) {
