@@ -48,9 +48,8 @@ namespace App\Jobs;
 
 use Exception;
 use CodeIgniter\Queue\BaseJob;
-use CodeIgniter\Queue\Interfaces\JobInterface;
 
-class Email extends BaseJob implements JobInterface
+class Email extends BaseJob
 {
     /**
      * @throws Exception
@@ -94,7 +93,7 @@ If you have to use transactions in your Job - this is a simple schema you can fo
 ```php
 // ...
 
-class Email extends BaseJob implements JobInterface
+class Email extends BaseJob
 {
     /**
      * @throws Exception
@@ -130,7 +129,7 @@ We can also configure some things on the job level. It's a number of tries, when
 ```php
 // ...
 
-class Email extends BaseJob implements JobInterface
+class Email extends BaseJob
 {
     protected int $retryAfter = 60;
     protected int $tries      = 1;

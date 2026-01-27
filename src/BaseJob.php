@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace CodeIgniter\Queue;
 
-abstract class BaseJob
+use CodeIgniter\Queue\Interfaces\JobInterface;
+
+abstract class BaseJob implements JobInterface
 {
     // Retry job after X seconds
     protected int $retryAfter = 60;
@@ -24,6 +26,8 @@ abstract class BaseJob
     public function __construct(protected array $data)
     {
     }
+
+    abstract public function process();
 
     public function getRetryAfter(): int
     {

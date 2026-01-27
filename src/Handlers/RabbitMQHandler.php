@@ -20,7 +20,6 @@ use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Events\QueueEventManager;
 use CodeIgniter\Queue\Exceptions\QueueException;
-use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use CodeIgniter\Queue\QueuePushResult;
@@ -32,7 +31,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use Throwable;
 
-class RabbitMQHandler extends BaseHandler implements QueueInterface
+class RabbitMQHandler extends BaseHandler
 {
     private readonly AbstractConnection $connection;
     private readonly AMQPChannel $channel;

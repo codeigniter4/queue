@@ -20,7 +20,6 @@ use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Events\QueueEventManager;
-use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use CodeIgniter\Queue\QueuePushResult;
@@ -29,7 +28,7 @@ use RedisException;
 use RuntimeException;
 use Throwable;
 
-class RedisHandler extends BaseHandler implements QueueInterface
+class RedisHandler extends BaseHandler
 {
     private readonly Redis $redis;
     private readonly string $luaScript;

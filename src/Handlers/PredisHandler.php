@@ -20,7 +20,6 @@ use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Events\QueueEventManager;
-use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use CodeIgniter\Queue\QueuePushResult;
@@ -29,7 +28,7 @@ use Predis\Client;
 use RuntimeException;
 use Throwable;
 
-class PredisHandler extends BaseHandler implements QueueInterface
+class PredisHandler extends BaseHandler
 {
     private readonly Client $predis;
     private readonly string $luaScript;
