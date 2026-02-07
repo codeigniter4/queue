@@ -14,10 +14,9 @@ declare(strict_types=1);
 namespace Tests\Support\Jobs;
 
 use CodeIgniter\Queue\BaseJob;
-use CodeIgniter\Queue\Interfaces\JobInterface;
 use Exception;
 
-class Failure extends BaseJob implements JobInterface
+class Failure extends BaseJob
 {
     /**
      * @throws Exception

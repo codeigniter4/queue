@@ -19,7 +19,6 @@ use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Events\QueueEventManager;
-use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Models\QueueJobModel;
 use CodeIgniter\Queue\Payloads\Payload;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
@@ -28,7 +27,7 @@ use ReflectionException;
 use RuntimeException;
 use Throwable;
 
-class DatabaseHandler extends BaseHandler implements QueueInterface
+class DatabaseHandler extends BaseHandler
 {
     private readonly QueueJobModel $jobModel;
 

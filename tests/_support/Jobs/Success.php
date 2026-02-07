@@ -14,9 +14,8 @@ declare(strict_types=1);
 namespace Tests\Support\Jobs;
 
 use CodeIgniter\Queue\BaseJob;
-use CodeIgniter\Queue\Interfaces\JobInterface;
 
-class Success extends BaseJob implements JobInterface
+class Success extends BaseJob
 {
     protected int $retryAfter = 6;
     protected int $tries      = 3;

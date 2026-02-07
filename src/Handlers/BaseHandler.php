@@ -19,6 +19,7 @@ use CodeIgniter\Queue\Config\Queue as QueueConfig;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Entities\QueueJobFailed;
 use CodeIgniter\Queue\Exceptions\QueueException;
+use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Queue\Models\QueueJobFailedModel;
 use CodeIgniter\Queue\Payloads\ChainBuilder;
 use CodeIgniter\Queue\Payloads\PayloadMetadata;
@@ -30,7 +31,7 @@ use Throwable;
 /**
  * @property QueueConfig $config
  */
-abstract class BaseHandler
+abstract class BaseHandler implements QueueInterface
 {
     use HasQueueValidation;
 
