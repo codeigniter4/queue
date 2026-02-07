@@ -264,6 +264,7 @@ final class PredisHandlerTest extends TestCase
         $predis = self::getPrivateProperty($handler, 'predis');
         $this->assertSame(1, $predis->hexists('queues:queue1::reserved', $queueJob->id));
         $this->assertSame(0, $predis->zcard('queues:queue1:default'));
+        $this->assertInstanceOf(QueueJob::class, $queueJob);
 
         $result = $handler->later($queueJob, 60);
 
@@ -281,6 +282,7 @@ final class PredisHandlerTest extends TestCase
         $queueJob = $handler->pop('queue1', ['default']);
 
         $err    = new Exception('Sample exception');
+        $this->assertInstanceOf(QueueJob::class, $queueJob);
         $result = $handler->failed($queueJob, $err, true);
 
         $predis = self::getPrivateProperty($handler, 'predis');
@@ -305,6 +307,7 @@ final class PredisHandlerTest extends TestCase
         $queueJob = $handler->pop('queue1', ['default']);
 
         $err    = new Exception('Sample exception');
+        $this->assertInstanceOf(QueueJob::class, $queueJob);
         $result = $handler->failed($queueJob, $err, false);
 
         $predis = self::getPrivateProperty($handler, 'predis');
@@ -330,6 +333,7 @@ final class PredisHandlerTest extends TestCase
 
         $predis = self::getPrivateProperty($handler, 'predis');
         $this->assertSame(0, $predis->zcard('queues:queue1:default'));
+        $this->assertInstanceOf(QueueJob::class, $queueJob);
 
         $result = $handler->done($queueJob);
 
