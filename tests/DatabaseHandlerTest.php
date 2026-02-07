@@ -367,7 +367,7 @@ final class DatabaseHandlerTest extends TestCase
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
 
-        $err    = new Exception('Sample exception');
+        $err = new Exception('Sample exception');
         $this->assertInstanceOf(QueueJob::class, $queueJob);
         $result = $handler->failed($queueJob, $err, true);
 
@@ -388,7 +388,7 @@ final class DatabaseHandlerTest extends TestCase
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
 
-        $err    = new Exception('Sample exception');
+        $err = new Exception('Sample exception');
         $this->assertInstanceOf(QueueJob::class, $queueJob);
         $result = $handler->failed($queueJob, $err, false);
 
@@ -480,7 +480,7 @@ final class DatabaseHandlerTest extends TestCase
         $handler  = new DatabaseHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
 
-        $err    = new Exception('Sample exception here');
+        $err = new Exception('Sample exception here');
         $this->assertInstanceOf(QueueJob::class, $queueJob);
         $result = $handler->failed($queueJob, $err, true);
 

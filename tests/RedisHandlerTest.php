@@ -266,7 +266,7 @@ final class RedisHandlerTest extends TestCase
         $handler  = new RedisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
 
-        $err    = new Exception('Sample exception');
+        $err = new Exception('Sample exception');
         $this->assertInstanceOf(QueueJob::class, $queueJob);
         $result = $handler->failed($queueJob, $err, true);
 
@@ -288,7 +288,7 @@ final class RedisHandlerTest extends TestCase
         $handler  = new RedisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
 
-        $err    = new Exception('Sample exception');
+        $err = new Exception('Sample exception');
         $this->assertInstanceOf(QueueJob::class, $queueJob);
         $result = $handler->failed($queueJob, $err, false);
 
