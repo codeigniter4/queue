@@ -492,6 +492,8 @@ class QueueWork extends BaseCommand
 
     /**
      * Handle interruption
+     *
+     * @phpstan-ignore method.unused
      */
     private function onInterruption(int $signal): void
     {

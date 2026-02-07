@@ -70,6 +70,7 @@ abstract class BaseHandler
             )
             ->findAll();
 
+        /** @var list<QueueJobFailed> $jobs */
         foreach ($jobs as $job) {
             $this->setPriority($job->priority)->push($job->queue, $job->payload['job'], $job->payload['data']);
             $this->forget($job->id);
