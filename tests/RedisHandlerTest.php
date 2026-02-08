@@ -252,6 +252,7 @@ final class RedisHandlerTest extends TestCase
         $redis = self::getPrivateProperty($handler, 'redis');
         $this->assertTrue($redis->hExists('queues:queue1::reserved', (string) $queueJob->id));
         $this->assertSame(0, $redis->zCard('queues:queue1:default'));
+        $this->assertInstanceOf(QueueJob::class, $queueJob);
 
         $result = $handler->later($queueJob, 60);
 
@@ -265,7 +266,8 @@ final class RedisHandlerTest extends TestCase
         $handler  = new RedisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
 
-        $err    = new Exception('Sample exception');
+        $err = new Exception('Sample exception');
+        $this->assertInstanceOf(QueueJob::class, $queueJob);
         $result = $handler->failed($queueJob, $err, true);
 
         $redis = self::getPrivateProperty($handler, 'redis');
@@ -286,7 +288,8 @@ final class RedisHandlerTest extends TestCase
         $handler  = new RedisHandler($this->config);
         $queueJob = $handler->pop('queue1', ['default']);
 
-        $err    = new Exception('Sample exception');
+        $err = new Exception('Sample exception');
+        $this->assertInstanceOf(QueueJob::class, $queueJob);
         $result = $handler->failed($queueJob, $err, false);
 
         $redis = self::getPrivateProperty($handler, 'redis');
@@ -309,6 +312,7 @@ final class RedisHandlerTest extends TestCase
 
         $redis = self::getPrivateProperty($handler, 'redis');
         $this->assertSame(0, $redis->zCard('queues:queue1:default'));
+        $this->assertInstanceOf(QueueJob::class, $queueJob);
 
         $result = $handler->done($queueJob);
 

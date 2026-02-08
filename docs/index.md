@@ -18,7 +18,7 @@ Listen for queued jobs.
 
 ### Requirements
 
-- PHP 8.1+
+- PHP 8.2+
 - CodeIgniter 4.3+
 
 If you use `database` handler:
