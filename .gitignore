@@ -128,3 +128,4 @@ nb-configuration.xml
 /.phpunit.*.cache
 /.phpunit.cache
 /.php-cs-fixer.php
+docs/assets/__pycache__/
