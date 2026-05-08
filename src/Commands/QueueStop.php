@@ -60,8 +60,7 @@ class QueueStop extends BaseCommand
      *
      * @var array<string, string>
      */
-    protected $options = [
-    ];
+    protected $options = [];
 
     /**
      * Actually execute a command.
