@@ -50,10 +50,8 @@ class QueueJobModel extends Model
     {
         $this->DBGroup = config('Queue')->database['dbGroup'];
 
-        /**
-         * @var BaseConnection|null $db
-         */
         $db ??= Database::connect($this->DBGroup);
+        assert($db instanceof BaseConnection);
 
         // Turn off the Strict Mode
         $db->transStrict(false);
