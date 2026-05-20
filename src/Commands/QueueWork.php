@@ -314,40 +314,19 @@ class QueueWork extends BaseCommand
         );
 
         try {
-            // Load payload metadata
-            $payloadMetadata = PayloadMetadata::fromArray($payload['metadata'] ?? []);
+            try {
+                // Load payload metadata
+                $payloadMetadata = PayloadMetadata::fromArray($payload['metadata'] ?? []);
 
-            // Renew lock if needed
-            $this->renewLock($payloadMetadata);
+                // Renew lock if needed
+                $this->renewLock($payloadMetadata);
 
-            $class = $config->resolveJobClass($payload['job']);
-            $job   = new $class($payload['data']);
-            $job->process();
-
-            // Mark as done
-            service('queue')->done($work);
-
-            // Emit job processing completed event
-            QueueEventManager::jobProcessingCompleted(
-                handler: service('queue')->name(),
-                queue: $work->queue,
-                job: $work,
-                processingTime: microtime(true) - $startTime,
-                metadata: [
-                    'worker_id' => $this->workerId,
-                ],
-            );
-
-            CLI::write('The processing of this job was successful', 'green');
-
-            // Check chained jobs
-            $this->processNextJobInChain($payloadMetadata);
-        } catch (Throwable $err) {
-            if (isset($job) && ++$work->attempts < ($tries ?? $job->getTries())) {
-                // Schedule for later
-                service('queue')->later($work, $retryAfter ?? $job->getRetryAfter());
-            } else {
-                // Mark as failed
+                $class = $config->resolveJobClass($payload['job']);
+                $job   = new $class($payload['data']);
+            } catch (Exception $err) {
+                // Mark dispatch-time exceptions as failed jobs, but allow
+                // PHP runtime errors to escape so the worker process can be
+                // recycled with fresh runtime state.
                 QueueEventManager::jobFailed(
                     handler: service('queue')->name(),
                     queue: $work->queue,
@@ -360,11 +339,58 @@ class QueueWork extends BaseCommand
                 );
 
                 service('queue')->failed($work, $err, $config->keepFailedJobs);
+                CLI::write('The processing of this job failed', 'red');
+
+                return;
             }
-            CLI::write('The processing of this job failed', 'red');
+
+            try {
+                $job->process();
+
+                // Mark as done
+                service('queue')->done($work);
+
+                // Emit job processing completed event
+                QueueEventManager::jobProcessingCompleted(
+                    handler: service('queue')->name(),
+                    queue: $work->queue,
+                    job: $work,
+                    processingTime: microtime(true) - $startTime,
+                    metadata: [
+                        'worker_id' => $this->workerId,
+                    ],
+                );
+
+                CLI::write('The processing of this job was successful', 'green');
+
+                // Check chained jobs
+                $this->processNextJobInChain($payloadMetadata);
+            } catch (Throwable $err) {
+                if (isset($job) && ++$work->attempts < ($tries ?? $job->getTries())) {
+                    // Schedule for later
+                    service('queue')->later($work, $retryAfter ?? $job->getRetryAfter());
+                } else {
+                    // Mark as failed
+                    QueueEventManager::jobFailed(
+                        handler: service('queue')->name(),
+                        queue: $work->queue,
+                        job: $work,
+                        exception: $err,
+                        processingTime: microtime(true) - $startTime,
+                        metadata: [
+                            'worker_id' => $this->workerId,
+                        ],
+                    );
+
+                    service('queue')->failed($work, $err, $config->keepFailedJobs);
+                }
+                CLI::write('The processing of this job failed', 'red');
+            }
         } finally {
             // Remove lock if needed
-            $this->clearLock($payloadMetadata);
+            if ($payloadMetadata instanceof PayloadMetadata) {
+                $this->clearLock($payloadMetadata);
+            }
 
             timer()->stop('work');
             CLI::write(sprintf('It took: %s sec', timer()->getElapsedTime('work')) . PHP_EOL, 'cyan');

@@ -18,6 +18,7 @@ use CodeIgniter\Config\Services;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Queue\Models\QueueJobModel;
 use CodeIgniter\Test\Filters\CITestStreamFilter;
+use Error;
 use Tests\Support\CLITestCase;
 
 /**
@@ -82,6 +83,67 @@ final class QueueWorkTest extends CLITestCase
 
         $this->assertSame('Listening for the jobs with the queue: test', $this->getLine(0));
         $this->assertSame('Starting a new job: failure, with ID: 1', $this->getLine(3));
+        $this->assertSame('The processing of this job failed', $this->getLine(4));
+        $this->assertSame('No job available. Stopping.', $this->getLine(7));
+    }
+
+    public function testRunRethrowsRuntimeErrorDuringJobDispatch(): void
+    {
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        fake(QueueJobModel::class, [
+            'connection'   => 'database',
+            'queue'        => 'test',
+            'payload'      => ['job' => 'constructor-runtime-error', 'data' => ['key' => 'value']],
+            'priority'     => 'default',
+            'status'       => 0,
+            'attempts'     => 0,
+            'available_at' => 1_702_977_074,
+        ]);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+        $outputBufferLevel = ob_get_level();
+
+        try {
+            command('queue:work test sleep 1 --stop-when-empty');
+
+            $this->fail('Expected dispatch-time runtime errors to bubble out of queue:work.');
+        } catch (Error $error) {
+            $this->assertSame('Runtime error during job construction.', $error->getMessage());
+        } finally {
+            while (ob_get_level() > $outputBufferLevel) {
+                ob_end_clean();
+            }
+
+            CITestStreamFilter::removeOutputFilter();
+        }
+    }
+
+    public function testRunRecordsTypeErrorThrownDuringJobProcessing(): void
+    {
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        fake(QueueJobModel::class, [
+            'connection'   => 'database',
+            'queue'        => 'test',
+            'payload'      => ['job' => 'process-type-error', 'data' => ['key' => 'value']],
+            'priority'     => 'default',
+            'status'       => 0,
+            'attempts'     => 0,
+            'available_at' => 1_702_977_074,
+        ]);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertSame('Listening for the jobs with the queue: test', $this->getLine(0));
+        $this->assertSame('Starting a new job: process-type-error, with ID: 1', $this->getLine(3));
         $this->assertSame('The processing of this job failed', $this->getLine(4));
         $this->assertSame('No job available. Stopping.', $this->getLine(7));
     }

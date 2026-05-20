@@ -18,7 +18,9 @@ use CodeIgniter\Queue\Handlers\DatabaseHandler;
 use CodeIgniter\Queue\Handlers\PredisHandler;
 use CodeIgniter\Queue\Handlers\RabbitMQHandler;
 use CodeIgniter\Queue\Handlers\RedisHandler;
+use Tests\Support\Jobs\ConstructorError;
 use Tests\Support\Jobs\Failure;
+use Tests\Support\Jobs\ProcessTypeError;
 use Tests\Support\Jobs\Success;
 
 class Queue extends BaseQueue
@@ -112,7 +114,9 @@ class Queue extends BaseQueue
      * Your jobs handlers.
      */
     public array $jobHandlers = [
-        'success' => Success::class,
-        'failure' => Failure::class,
+        'success'                   => Success::class,
+        'failure'                   => Failure::class,
+        'constructor-runtime-error' => ConstructorError::class,
+        'process-type-error'        => ProcessTypeError::class,
     ];
 }
