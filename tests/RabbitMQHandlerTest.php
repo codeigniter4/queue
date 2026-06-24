@@ -32,14 +32,27 @@ final class RabbitMQHandlerTest extends TestCase
 {
     use ReflectionHelper;
 
+    private string $customPriorityQueue;
+    private string $emptyQueue;
     private QueueConfig $config;
     private ?RabbitMQHandler $handler = null;
+    private string $priorityQueue;
+    private string $testQueue;
+    private string $testQueue1;
+    private string $testQueue2;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->config = config(QueueConfig::class);
+        $suffix                    = bin2hex(random_bytes(6));
+        $this->testQueue           = 'test-queue-' . $suffix;
+        $this->testQueue1          = 'test-queue-1-' . $suffix;
+        $this->testQueue2          = 'test-queue-2-' . $suffix;
+        $this->priorityQueue       = 'priority-test-' . $suffix;
+        $this->customPriorityQueue = 'custom-priority-queue-' . $suffix;
+        $this->emptyQueue          = 'empty-queue-' . $suffix;
+        $this->config              = config(QueueConfig::class);
 
         // Skip tests if RabbitMQ is not available
         if (! $this->isRabbitMQAvailable()) {
@@ -56,13 +69,8 @@ final class RabbitMQHandlerTest extends TestCase
     protected function tearDown(): void
     {
         if ($this->handler !== null) {
-            // Clear test queues
             try {
-                $this->handler->clear('test-queue');
-                $this->handler->clear('test-queue-1');
-                $this->handler->clear('test-queue-2');
-                $this->handler->clear('priority-test');
-                $this->handler->clear('custom-priority-queue');
+                $this->deleteDeclaredResources();
             } catch (Throwable) {
                 // Ignore cleanup errors
             }
@@ -91,7 +99,7 @@ final class RabbitMQHandlerTest extends TestCase
 
     public function testPushJob(): void
     {
-        $result = $this->handler->push('test-queue', 'success', ['message' => 'Hello World']);
+        $result = $this->handler->push($this->testQueue, 'success', ['message' => 'Hello World']);
 
         $this->assertInstanceOf(QueuePushResult::class, $result);
         $this->assertTrue($result->getStatus());
@@ -101,7 +109,7 @@ final class RabbitMQHandlerTest extends TestCase
 
     public function testPushJobWithDelay(): void
     {
-        $result = $this->handler->setDelay(30)->push('test-queue', 'success', ['message' => 'Delayed']);
+        $result = $this->handler->setDelay(30)->push($this->testQueue, 'success', ['message' => 'Delayed']);
 
         $this->assertInstanceOf(QueuePushResult::class, $result);
         $this->assertTrue($result->getStatus());
@@ -109,95 +117,79 @@ final class RabbitMQHandlerTest extends TestCase
 
     public function testPushJobWithPriority(): void
     {
-        $this->config->queuePriorities['priority-test'] = ['high', 'default', 'low'];
+        $this->config->queuePriorities[$this->priorityQueue] = ['high', 'default', 'low'];
 
-        $result = $this->handler->setPriority('high')->push('priority-test', 'success', ['priority' => 'high']);
+        $result = $this->handler->setPriority('high')->push($this->priorityQueue, 'success', ['priority' => 'high']);
 
         $this->assertTrue($result->getStatus());
     }
 
     public function testPopJob(): void
     {
-        $this->handler->push('test-queue', 'success', ['message' => 'Test Pop']);
+        $this->handler->push($this->testQueue, 'success', ['message' => 'Test Pop']);
 
-        // Give RabbitMQ a moment to process
-        usleep(100_000);
+        $job = $this->popEventually($this->testQueue, ['default']);
 
-        $job = $this->handler->pop('test-queue', ['default']);
+        $this->assertInstanceOf(QueueJob::class, $job);
+        $this->assertSame($this->testQueue, $job->queue);
+        $this->assertSame('success', $job->payload['job']);
+        $this->assertSame(['message' => 'Test Pop'], $job->payload['data']);
 
-        if ($job !== null) {
-            $this->assertInstanceOf(QueueJob::class, $job);
-            $this->assertSame('test-queue', $job->queue);
-            $this->assertSame('success', $job->payload['job']);
-            $this->assertSame(['message' => 'Test Pop'], $job->payload['data']);
-
-            // Clean up - mark as done
-            $this->handler->done($job);
-        }
+        // Clean up - mark as done
+        $this->handler->done($job);
     }
 
     public function testPopJobWithPriorities(): void
     {
-        $this->config->queuePriorities['priority-test'] = ['high', 'default', 'low'];
+        $this->config->queuePriorities[$this->priorityQueue] = ['high', 'default', 'low'];
 
         // Push jobs with different priorities
-        $this->handler->setPriority('low')->push('priority-test', 'success', ['priority' => 'low']);
-        $this->handler->setPriority('high')->push('priority-test', 'success', ['priority' => 'high']);
-        $this->handler->setPriority('default')->push('priority-test', 'success', ['priority' => 'default']);
-
-        usleep(100_000);
+        $this->handler->setPriority('low')->push($this->priorityQueue, 'success', ['priority' => 'low']);
+        $this->handler->setPriority('high')->push($this->priorityQueue, 'success', ['priority' => 'high']);
+        $this->handler->setPriority('default')->push($this->priorityQueue, 'success', ['priority' => 'default']);
 
         // Should get high priority job first
-        $job = $this->handler->pop('priority-test', ['high', 'default', 'low']);
+        $job = $this->popEventually($this->priorityQueue, ['high', 'default', 'low']);
 
-        if ($job !== null) {
-            $this->assertSame('high', $job->priority);
-            $this->handler->done($job);
-        }
+        $this->assertInstanceOf(QueueJob::class, $job);
+        $this->assertSame('high', $job->priority);
+        $this->handler->done($job);
     }
 
     public function testJobFailure(): void
     {
-        $this->handler->push('test-queue', 'failure', ['message' => 'Will Fail']);
+        $this->handler->push($this->testQueue, 'failure', ['message' => 'Will Fail']);
 
-        usleep(100_000);
+        $job = $this->popEventually($this->testQueue, ['default']);
 
-        $job = $this->handler->pop('test-queue', ['default']);
+        $this->assertInstanceOf(QueueJob::class, $job);
+        $exception = new Exception('Test failure');
+        $result    = $this->handler->failed($job, $exception, false);
 
-        if ($job !== null) {
-            $exception = new Exception('Test failure');
-            $result    = $this->handler->failed($job, $exception, false);
-
-            $this->assertTrue($result);
-        }
+        $this->assertTrue($result);
     }
 
     public function testJobLater(): void
     {
-        $this->handler->push('test-queue', 'success', ['message' => 'Reschedule']);
+        $this->handler->push($this->testQueue, 'success', ['message' => 'Reschedule']);
 
-        usleep(100_000);
+        $job = $this->popEventually($this->testQueue, ['default']);
 
-        $job = $this->handler->pop('test-queue', ['default']);
-
-        if ($job !== null) {
-            $result = $this->handler->later($job, 60);
-            $this->assertTrue($result);
-        }
+        $this->assertInstanceOf(QueueJob::class, $job);
+        $result = $this->handler->later($job, 60);
+        $this->assertTrue($result);
     }
 
     public function testClearQueue(): void
     {
-        $this->handler->push('test-queue', 'success', ['message' => 'Clear Test 1']);
-        $this->handler->push('test-queue', 'success', ['message' => 'Clear Test 2']);
+        $this->handler->push($this->testQueue, 'success', ['message' => 'Clear Test 1']);
+        $this->handler->push($this->testQueue, 'success', ['message' => 'Clear Test 2']);
 
-        usleep(100_000);
-
-        $result = $this->handler->clear('test-queue');
+        $result = $this->handler->clear($this->testQueue);
         $this->assertTrue($result);
 
         // Verify queue is empty
-        $job = $this->handler->pop('test-queue', ['default']);
+        $job = $this->handler->pop($this->testQueue, ['default']);
         $this->assertNull($job);
     }
 
@@ -205,7 +197,7 @@ final class RabbitMQHandlerTest extends TestCase
     {
         $this->expectException(QueueException::class);
 
-        $this->handler->push('test-queue', 'nonexistent-job', []);
+        $this->handler->push($this->testQueue, 'nonexistent-job', []);
     }
 
     public function testIncorrectQueueFormat(): void
@@ -219,47 +211,42 @@ final class RabbitMQHandlerTest extends TestCase
     {
         $this->expectException(QueueException::class);
 
-        $this->config->queuePriorities['test-queue'] = ['high', 'low'];
+        $this->config->queuePriorities[$this->testQueue] = ['high', 'low'];
 
-        $this->handler->setPriority('medium')->push('test-queue', 'success', []);
+        $this->handler->setPriority('medium')->push($this->testQueue, 'success', []);
     }
 
     public function testCustomPriorityMapping(): void
     {
         // Define custom priorities for a queue
-        $this->config->queuePriorities['custom-priority-queue'] = ['urgent', 'normal', 'low'];
+        $this->config->queuePriorities[$this->customPriorityQueue] = ['urgent', 'normal', 'low'];
 
         // Test that we can push jobs with custom priorities
-        $result1 = $this->handler->setPriority('urgent')->push('custom-priority-queue', 'success', ['priority' => 'urgent']);
-        $result2 = $this->handler->setPriority('normal')->push('custom-priority-queue', 'success', ['priority' => 'normal']);
-        $result3 = $this->handler->setPriority('low')->push('custom-priority-queue', 'success', ['priority' => 'low']);
+        $result1 = $this->handler->setPriority('urgent')->push($this->customPriorityQueue, 'success', ['priority' => 'urgent']);
+        $result2 = $this->handler->setPriority('normal')->push($this->customPriorityQueue, 'success', ['priority' => 'normal']);
+        $result3 = $this->handler->setPriority('low')->push($this->customPriorityQueue, 'success', ['priority' => 'low']);
 
         $this->assertTrue($result1->getStatus());
         $this->assertTrue($result2->getStatus());
         $this->assertTrue($result3->getStatus());
 
-        usleep(100_000);
-
         // Should get urgent priority job first
-        $job = $this->handler->pop('custom-priority-queue', ['urgent', 'normal', 'low']);
-        if ($job !== null) {
-            $this->assertSame('urgent', $job->payload['data']['priority']);
-            $this->handler->done($job);
-        }
+        $job = $this->popEventually($this->customPriorityQueue, ['urgent', 'normal', 'low']);
+        $this->assertInstanceOf(QueueJob::class, $job);
+        $this->assertSame('urgent', $job->payload['data']['priority']);
+        $this->handler->done($job);
 
         // Then normal priority
-        $job = $this->handler->pop('custom-priority-queue', ['urgent', 'normal', 'low']);
-        if ($job !== null) {
-            $this->assertSame('normal', $job->payload['data']['priority']);
-            $this->handler->done($job);
-        }
+        $job = $this->handler->pop($this->customPriorityQueue, ['urgent', 'normal', 'low']);
+        $this->assertInstanceOf(QueueJob::class, $job);
+        $this->assertSame('normal', $job->payload['data']['priority']);
+        $this->handler->done($job);
 
         // Finally low priority
-        $job = $this->handler->pop('custom-priority-queue', ['urgent', 'normal', 'low']);
-        if ($job !== null) {
-            $this->assertSame('low', $job->payload['data']['priority']);
-            $this->handler->done($job);
-        }
+        $job = $this->handler->pop($this->customPriorityQueue, ['urgent', 'normal', 'low']);
+        $this->assertInstanceOf(QueueJob::class, $job);
+        $this->assertSame('low', $job->payload['data']['priority']);
+        $this->handler->done($job);
     }
 
     public function testPriority(): void
@@ -279,15 +266,15 @@ final class RabbitMQHandlerTest extends TestCase
 
     public function testPopEmpty(): void
     {
-        $result = $this->handler->pop('empty-queue', ['default']);
+        $result = $this->handler->pop($this->emptyQueue, ['default']);
 
         $this->assertNull($result);
     }
 
     public function testFailedAndKeepJob(): void
     {
-        $this->handler->push('test-queue', 'success', ['test' => 'data']);
-        $queueJob = $this->handler->pop('test-queue', ['default']);
+        $this->handler->push($this->testQueue, 'success', ['test' => 'data']);
+        $queueJob = $this->handler->pop($this->testQueue, ['default']);
 
         $this->assertInstanceOf(QueueJob::class, $queueJob);
 
@@ -297,15 +284,15 @@ final class RabbitMQHandlerTest extends TestCase
         $this->assertTrue($result);
 
         $this->seeInDatabase('queue_jobs_failed', [
-            'queue'      => 'test-queue',
+            'queue'      => $this->testQueue,
             'connection' => 'rabbitmq',
         ]);
     }
 
     public function testFailedAndDontKeepJob(): void
     {
-        $this->handler->push('test-queue', 'success', ['test' => 'data']);
-        $queueJob = $this->handler->pop('test-queue', ['default']);
+        $this->handler->push($this->testQueue, 'success', ['test' => 'data']);
+        $queueJob = $this->handler->pop($this->testQueue, ['default']);
 
         $this->assertInstanceOf(QueueJob::class, $queueJob);
 
@@ -315,15 +302,15 @@ final class RabbitMQHandlerTest extends TestCase
         $this->assertTrue($result);
 
         $this->dontSeeInDatabase('queue_jobs_failed', [
-            'queue'      => 'test-queue',
+            'queue'      => $this->testQueue,
             'connection' => 'rabbitmq',
         ]);
     }
 
     public function testDone(): void
     {
-        $this->handler->push('test-queue', 'success', ['test' => 'data']);
-        $queueJob = $this->handler->pop('test-queue', ['default']);
+        $this->handler->push($this->testQueue, 'success', ['test' => 'data']);
+        $queueJob = $this->handler->pop($this->testQueue, ['default']);
 
         $this->assertInstanceOf(QueueJob::class, $queueJob);
 
@@ -335,13 +322,11 @@ final class RabbitMQHandlerTest extends TestCase
 
     public function testClearAll(): void
     {
-        $this->handler->push('test-queue-1', 'success', ['test' => 'data1']);
-        $this->handler->push('test-queue-2', 'success', ['test' => 'data2']);
+        $this->handler->push($this->testQueue1, 'success', ['test' => 'data1']);
+        $this->handler->push($this->testQueue2, 'success', ['test' => 'data2']);
 
-        usleep(100_000);
-
-        $job1 = $this->handler->pop('test-queue-1', ['default']);
-        $job2 = $this->handler->pop('test-queue-2', ['default']);
+        $job1 = $this->popEventually($this->testQueue1, ['default']);
+        $job2 = $this->popEventually($this->testQueue2, ['default']);
 
         $this->assertInstanceOf(QueueJob::class, $job1);
         $this->assertInstanceOf(QueueJob::class, $job2);
@@ -356,15 +341,13 @@ final class RabbitMQHandlerTest extends TestCase
             $channel->basic_nack($job2->amqpDeliveryTag, false, true);
         }
 
-        usleep(100_000);
-
         // Clear all queues
         $result = $this->handler->clear();
         $this->assertTrue($result);
 
         // Verify queues are empty by attempting to pop
-        $jobAfter1 = $this->handler->pop('test-queue-1', ['default']);
-        $jobAfter2 = $this->handler->pop('test-queue-2', ['default']);
+        $jobAfter1 = $this->handler->pop($this->testQueue1, ['default']);
+        $jobAfter2 = $this->handler->pop($this->testQueue2, ['default']);
 
         $this->assertNull($jobAfter1);
         $this->assertNull($jobAfter2);
@@ -384,5 +367,37 @@ final class RabbitMQHandlerTest extends TestCase
     private function isRabbitMQAvailable(): bool
     {
         return class_exists(AMQPConnectionFactory::class);
+    }
+
+    private function deleteDeclaredResources(): void
+    {
+        $channel = self::getPrivateProperty($this->handler, 'channel');
+
+        foreach (array_keys(self::getPrivateProperty($this->handler, 'declaredQueues')) as $queue) {
+            $channel->queue_delete($queue);
+        }
+
+        foreach (array_keys(self::getPrivateProperty($this->handler, 'declaredExchanges')) as $exchange) {
+            $channel->exchange_delete($exchange);
+        }
+    }
+
+    /**
+     * @param list<string> $priorities
+     */
+    private function popEventually(string $queue, array $priorities, float $timeout = 1.0): ?QueueJob
+    {
+        $deadline = microtime(true) + $timeout;
+
+        do {
+            $job = $this->handler->pop($queue, $priorities);
+            if ($job !== null) {
+                return $job;
+            }
+
+            usleep(10_000);
+        } while (microtime(true) < $deadline);
+
+        return null;
     }
 }

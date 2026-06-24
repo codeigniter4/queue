@@ -35,8 +35,9 @@ class RabbitMQHandler extends BaseHandler
 {
     private readonly AbstractConnection $connection;
     private readonly AMQPChannel $channel;
-    private array $declaredQueues    = [];
-    private array $declaredExchanges = [];
+    private array $declaredLogicalQueues = [];
+    private array $declaredQueues        = [];
+    private array $declaredExchanges     = [];
 
     public function __construct(protected QueueConfig $config)
     {
@@ -273,8 +274,12 @@ class RabbitMQHandler extends BaseHandler
     {
         try {
             if ($queue === null) {
-                // Clear all configured queues
-                foreach (array_keys($this->config->queuePriorities) as $queueName) {
+                $queueNames = array_unique([
+                    ...array_keys($this->config->queuePriorities),
+                    ...array_keys($this->declaredLogicalQueues),
+                ]);
+
+                foreach ($queueNames as $queueName) {
                     $this->clearQueue($queueName);
                 }
             } else {
@@ -300,7 +305,8 @@ class RabbitMQHandler extends BaseHandler
      */
     private function declareQueue(string $queue): void
     {
-        $priorities = $this->config->queuePriorities[$queue] ?? ['default'];
+        $this->declaredLogicalQueues[$queue] = true;
+        $priorities                          = $this->config->queuePriorities[$queue] ?? ['default'];
 
         foreach ($priorities as $priority) {
             $queueName = $this->getQueueName($queue, $priority);
@@ -459,16 +465,20 @@ class RabbitMQHandler extends BaseHandler
      */
     private function clearQueue(string $queue): void
     {
+        // Purging a queue that does not exist closes the AMQP channel.
+        $this->declareQueue($queue);
+
         $priorities = $this->config->queuePriorities[$queue] ?? ['default'];
 
         foreach ($priorities as $priority) {
             $queueName = $this->getQueueName($queue, $priority);
 
-            try {
-                $this->channel->queue_purge($queueName);
-            } catch (Throwable) {
-                // Queue might not exist, ignore
-            }
+            $this->channel->queue_purge($queueName);
+        }
+
+        $delayQueueName = $this->getDelayQueueName($queue);
+        if (isset($this->declaredQueues[$delayQueueName])) {
+            $this->channel->queue_purge($delayQueueName);
         }
     }
 
