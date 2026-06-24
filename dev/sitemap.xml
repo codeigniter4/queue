@@ -2,34 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://queue.codeigniter.com/dev/</loc>
-         <lastmod>2026-06-05</lastmod>
+         <lastmod>2026-06-24</lastmod>
     </url>
     <url>
          <loc>https://queue.codeigniter.com/dev/basic-usage/</loc>
-         <lastmod>2026-06-05</lastmod>
+         <lastmod>2026-06-24</lastmod>
     </url>
     <url>
          <loc>https://queue.codeigniter.com/dev/commands/</loc>
-         <lastmod>2026-06-05</lastmod>
+         <lastmod>2026-06-24</lastmod>
     </url>
     <url>
          <loc>https://queue.codeigniter.com/dev/configuration/</loc>
-         <lastmod>2026-06-05</lastmod>
+         <lastmod>2026-06-24</lastmod>
     </url>
     <url>
          <loc>https://queue.codeigniter.com/dev/events/</loc>
-         <lastmod>2026-06-05</lastmod>
+         <lastmod>2026-06-24</lastmod>
     </url>
     <url>
          <loc>https://queue.codeigniter.com/dev/installation/</loc>
-         <lastmod>2026-06-05</lastmod>
+         <lastmod>2026-06-24</lastmod>
     </url>
     <url>
          <loc>https://queue.codeigniter.com/dev/running-queues/</loc>
-         <lastmod>2026-06-05</lastmod>
+         <lastmod>2026-06-24</lastmod>
     </url>
     <url>
          <loc>https://queue.codeigniter.com/dev/troubleshooting/</loc>
-         <lastmod>2026-06-05</lastmod>
+         <lastmod>2026-06-24</lastmod>
     </url>
 </urlset>
