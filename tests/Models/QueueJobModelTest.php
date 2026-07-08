@@ -59,4 +59,25 @@ final class QueueJobModelTest extends TestCase
 
         $this->assertSame($sql, $result);
     }
+
+    public function testSetPriority(): void
+    {
+        $model   = model(QueueJobModel::class);
+        $method  = $this->getPrivateMethodInvoker($model, 'setPriority');
+        $builder = $model->builder();
+
+        $result = $method($builder, ['high', 'low']);
+
+        $sql = $result->getCompiledSelect();
+
+        $this->assertStringContainsString('priority', $sql);
+        if ($model->db->DBDriver === 'MySQLi') {
+            $this->assertStringContainsString('FIELD(priority, ', $sql);
+        } else {
+            $this->assertStringContainsString('CASE ', $sql);
+            $this->assertStringContainsString(' WHEN ', $sql);
+            $this->assertStringContainsString(' THEN ', $sql);
+            $this->assertStringContainsString(' END', $sql);
+        }
+    }
 }
