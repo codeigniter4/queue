@@ -129,7 +129,7 @@ final class QueueJobModelTest extends TestCase
         $result = $method($builder, $priority);
         $sql    = (string) $result->getCompiledSelect();
 
-        $this->assertStringContainsString($model->db->escape($priority['priority_key']), $sql);
-        $this->assertStringNotContainsString('priority_key', $sql);
+        $this->assertStringContainsString($model->db->escape($priority['priority_key']), (string) $sql);
+        $this->assertStringNotContainsString('priority_key', (string) $sql);
     }
 }
