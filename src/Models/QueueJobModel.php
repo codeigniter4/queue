@@ -208,15 +208,19 @@ class QueueJobModel extends Model
      */
     private function setPriority(BaseBuilder $builder, array $priority): BaseBuilder
     {
+        $priority = array_values($priority);
+
         $builder->whereIn('priority', $priority);
 
         if ($priority !== ['default']) {
+            $escapedPriority = array_map($this->db->escape(...), $priority);
+
             if ($this->db->DBDriver !== 'MySQLi') {
                 $builder->orderBy(
                     sprintf('CASE %s ', $this->db->protectIdentifiers('priority'))
                     . implode(
                         ' ',
-                        array_map(static fn ($value, $key) => "WHEN '{$value}' THEN {$key}", $priority, array_keys($priority)),
+                        array_map(static fn ($value, $key) => "WHEN {$value} THEN {$key}", $escapedPriority, array_keys($escapedPriority)),
                     )
                     . ' END',
                     '',
@@ -225,10 +229,7 @@ class QueueJobModel extends Model
             } else {
                 $builder->orderBy(
                     'FIELD(priority, '
-                    . implode(
-                        ',',
-                        array_map(static fn ($value) => "'{$value}'", $priority),
-                    )
+                    . implode(',', $escapedPriority)
                     . ')',
                     '',
                     false,
