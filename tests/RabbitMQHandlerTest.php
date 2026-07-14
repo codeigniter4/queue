@@ -193,6 +193,19 @@ final class RabbitMQHandlerTest extends TestCase
         $this->assertNull($job);
     }
 
+    public function testClearNonexistentQueueKeepsHandlerUsable(): void
+    {
+        $this->assertTrue($this->handler->clear($this->testQueue));
+
+        $result = $this->handler->push($this->testQueue, 'success', ['message' => 'Still usable']);
+        $this->assertTrue($result->getStatus());
+
+        $job = $this->handler->pop($this->testQueue, ['default']);
+        $this->assertInstanceOf(QueueJob::class, $job);
+        $this->assertSame('Still usable', $job->payload['data']['message']);
+        $this->handler->done($job);
+    }
+
     public function testIncorrectJobHandler(): void
     {
         $this->expectException(QueueException::class);

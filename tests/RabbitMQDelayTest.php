@@ -160,6 +160,22 @@ final class RabbitMQDelayTest extends TestCase
         $this->handler->done($job);
     }
 
+    public function testFreshHandlerClearsImmediateAndDelayedJobs(): void
+    {
+        $delayedResult = $this->handler->setDelay(1)->push($this->queue, 'success', ['type' => 'delayed']);
+        $this->assertTrue($delayedResult->getStatus());
+
+        $immediateResult = $this->handler->push($this->queue, 'success', ['type' => 'immediate']);
+        $this->assertTrue($immediateResult->getStatus());
+
+        $clearer = new RabbitMQHandler(config(QueueConfig::class));
+        $this->assertTrue($clearer->clear($this->queue));
+
+        sleep(2);
+
+        $this->assertNull($clearer->pop($this->queue, ['default']));
+    }
+
     /**
      * Check if RabbitMQ is available for testing.
      */

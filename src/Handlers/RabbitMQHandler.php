@@ -27,6 +27,7 @@ use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Connection\AMQPConnectionConfig;
 use PhpAmqpLib\Connection\AMQPConnectionFactory;
+use PhpAmqpLib\Exception\AMQPProtocolChannelException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use Throwable;
@@ -465,20 +466,39 @@ class RabbitMQHandler extends BaseHandler
      */
     private function clearQueue(string $queue): void
     {
-        // Purging a queue that does not exist closes the AMQP channel.
-        $this->declareQueue($queue);
+        // Purge delayed jobs first so they cannot expire into a queue
+        // that has already been purged.
+        $this->purgeQueueIfExists($this->getDelayQueueName($queue));
 
         $priorities = $this->config->queuePriorities[$queue] ?? ['default'];
 
         foreach ($priorities as $priority) {
-            $queueName = $this->getQueueName($queue, $priority);
-
-            $this->channel->queue_purge($queueName);
+            $this->purgeQueueIfExists($this->getQueueName($queue, $priority));
         }
+    }
 
-        $delayQueueName = $this->getDelayQueueName($queue);
-        if (isset($this->declaredQueues[$delayQueueName])) {
-            $this->channel->queue_purge($delayQueueName);
+    /**
+     * Purge a queue without risking the handler's main channel.
+     */
+    private function purgeQueueIfExists(string $queue): void
+    {
+        $channel = $this->connection->channel();
+
+        try {
+            $channel->queue_purge($queue);
+        } catch (Throwable $e) {
+            // RabbitMQ closes the channel with 404 when the queue is missing.
+            if (! $e instanceof AMQPProtocolChannelException || $e->getCode() !== 404) {
+                throw $e;
+            }
+        } finally {
+            try {
+                if ($channel->is_open()) {
+                    $channel->close();
+                }
+            } catch (Throwable) {
+                // The broker may already have closed this disposable channel.
+            }
         }
     }
 
