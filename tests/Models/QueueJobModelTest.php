@@ -66,17 +66,23 @@ final class QueueJobModelTest extends TestCase
         $method  = $this->getPrivateMethodInvoker($model, 'setPriority');
         $builder = $model->builder();
 
-        $result = $method($builder, ['high', 'low']);
+        $result = $method($builder, ['key1' => 'high', 'key2' => 'low', 'key3' => "un'safe"]);
 
         $sql = $result->getCompiledSelect();
 
         $this->assertStringContainsString('priority', $sql);
+
+        $escHigh   = $model->db->escape('high');
+        $escLow    = $model->db->escape('low');
+        $escUnsafe = $model->db->escape("un'safe");
+
         if ($model->db->DBDriver === 'MySQLi') {
-            $this->assertStringContainsString('FIELD(priority, ', $sql);
+            $this->assertStringContainsString("FIELD(priority, {$escHigh}, {$escLow}, {$escUnsafe})", $sql);
         } else {
             $this->assertStringContainsString('CASE ', $sql);
-            $this->assertStringContainsString(' WHEN ', $sql);
-            $this->assertStringContainsString(' THEN ', $sql);
+            $this->assertStringContainsString("WHEN {$escHigh} THEN 0", $sql);
+            $this->assertStringContainsString("WHEN {$escLow} THEN 1", $sql);
+            $this->assertStringContainsString("WHEN {$escUnsafe} THEN 2", $sql);
             $this->assertStringContainsString(' END', $sql);
         }
     }

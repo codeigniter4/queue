@@ -131,6 +131,8 @@ class QueueJobModel extends Model
      */
     private function setPriority(BaseBuilder $builder, array $priority): BaseBuilder
     {
+        $priority = array_values($priority);
+
         $builder->whereIn('priority', $priority);
 
         if ($priority !== ['default']) {
