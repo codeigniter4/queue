@@ -117,6 +117,8 @@ When using the `chain()` method, there are a few important differences compared 
 
 As mentioned above, sometimes we may want to have multiple instances of the same command running at the same time. The queue is safe to use in that scenario with all databases as long as you keep the `skipLocked` to `true` in the config file. Only for SQLite3 driver, this setting is not relevant as it provides atomicity without the need for explicit concurrency control.
 
+When using **SQLite3** with multiple worker processes, configure `busyTimeout` in the selected connection group. This lets a worker wait briefly when another process holds SQLite's write lock instead of failing immediately with `SQLITE_BUSY`.
+
 The PHPRedis and Predis drivers are also safe to use with multiple instances of the same command.
 
 ### Handling long-running process

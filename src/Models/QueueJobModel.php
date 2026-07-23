@@ -23,6 +23,7 @@ use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Validation\ValidationInterface;
 use Config\Database;
 use ReflectionException;
+use Throwable;
 
 class QueueJobModel extends Model
 {
@@ -72,6 +73,80 @@ class QueueJobModel extends Model
             // Make sure we still have the connection
             $this->db->reconnect();
         }
+
+        return match ($this->db->DBDriver) {
+            'SQLite3' => $this->popAtomic($name, $priority),
+            default   => $this->popWithLock($name, $priority),
+        };
+    }
+
+    /**
+     * Claim the oldest pending job while holding SQLite's write lock.
+     *
+     * SQLite has no FOR UPDATE SKIP LOCKED. BEGIN IMMEDIATE takes the write
+     * lock before the SELECT, so the candidate cannot be claimed by another
+     * worker between selecting it and marking it RESERVED.
+     *
+     * @throws ReflectionException
+     */
+    private function popAtomic(string $name, array $priority): ?QueueJob
+    {
+        if ($this->db->simpleQuery('BEGIN IMMEDIATE') === false) {
+            return null;
+        }
+
+        try {
+            $builder = $this->builder()
+                ->where('queue', $name)
+                ->where('status', Status::PENDING->value)
+                ->where('available_at <=', Time::now()->timestamp)
+                ->limit(1);
+
+            $builder = $this->setPriority($builder, $priority);
+            $sql     = $builder->getCompiledSelect();
+
+            $query = $this->db->query($sql);
+
+            if ($query === false) {
+                $this->db->simpleQuery('ROLLBACK');
+
+                return null;
+            }
+
+            /** @var QueueJob|null $row */
+            $row = $query->getCustomRowObject(0, QueueJob::class);
+
+            if ($row === null) {
+                $this->db->simpleQuery('COMMIT');
+
+                return null;
+            }
+
+            $this->builder()
+                ->where('id', $row->id)
+                ->where('status', Status::PENDING->value)
+                ->update(['status' => Status::RESERVED->value]);
+
+            $claimed = $this->db->affectedRows() === 1;
+
+            $this->db->simpleQuery('COMMIT');
+
+            return $claimed ? $row : null;
+        } catch (Throwable $e) {
+            $this->db->simpleQuery('ROLLBACK');
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Claim the oldest pending job inside a transaction, using
+     * FOR UPDATE SKIP LOCKED where supported.
+     *
+     * @throws ReflectionException
+     */
+    private function popWithLock(string $name, array $priority): ?QueueJob
+    {
         // Start transaction
         $this->db->transStart();
 
@@ -87,6 +162,8 @@ class QueueJobModel extends Model
 
         $query = $this->db->query($this->skipLocked($sql));
         if ($query === false) {
+            $this->db->transComplete();
+
             return null;
         }
         /** @var QueueJob|null $row */

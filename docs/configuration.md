@@ -43,6 +43,8 @@ The configuration settings for `database` handler.
 
     The [Strict Mode](https://codeigniter.com/user_guide/database/transactions.html#strict-mode) for the given `dbGroup` is automatically disabled - due to the nature of the queue worker.
 
+    When using **SQLite3** with multiple worker processes, configure `busyTimeout` in the selected connection group. This lets a worker wait briefly when another process holds SQLite's write lock instead of failing immediately with `SQLITE_BUSY`.
+
 ### $redis
 
 The configuration settings for `redis` handler. You need to have a [ext-redis](https://github.com/phpredis/phpredis) installed to use it.
