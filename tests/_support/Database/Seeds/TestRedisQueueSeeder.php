@@ -40,7 +40,10 @@ class TestRedisQueueSeeder extends Seeder
             throw new CriticalError('Queue: RedisException occurred with message (' . $e->getMessage() . ').');
         }
 
-        $redis->flushDB();
+        $keys = $redis->keys('queues:*');
+        if ($keys !== []) {
+            $redis->del($keys);
+        }
 
         $jobQueue = new QueueJob([
             'id'           => '1234567890123456',

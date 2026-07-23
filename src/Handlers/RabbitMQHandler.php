@@ -27,6 +27,7 @@ use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Connection\AMQPConnectionConfig;
 use PhpAmqpLib\Connection\AMQPConnectionFactory;
+use PhpAmqpLib\Exception\AMQPProtocolChannelException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use Throwable;
@@ -35,8 +36,9 @@ class RabbitMQHandler extends BaseHandler
 {
     private readonly AbstractConnection $connection;
     private readonly AMQPChannel $channel;
-    private array $declaredQueues    = [];
-    private array $declaredExchanges = [];
+    private array $declaredLogicalQueues = [];
+    private array $declaredQueues        = [];
+    private array $declaredExchanges     = [];
 
     public function __construct(protected QueueConfig $config)
     {
@@ -273,8 +275,12 @@ class RabbitMQHandler extends BaseHandler
     {
         try {
             if ($queue === null) {
-                // Clear all configured queues
-                foreach (array_keys($this->config->queuePriorities) as $queueName) {
+                $queueNames = array_unique([
+                    ...array_keys($this->config->queuePriorities),
+                    ...array_keys($this->declaredLogicalQueues),
+                ]);
+
+                foreach ($queueNames as $queueName) {
                     $this->clearQueue($queueName);
                 }
             } else {
@@ -300,7 +306,8 @@ class RabbitMQHandler extends BaseHandler
      */
     private function declareQueue(string $queue): void
     {
-        $priorities = $this->config->queuePriorities[$queue] ?? ['default'];
+        $this->declaredLogicalQueues[$queue] = true;
+        $priorities                          = $this->config->queuePriorities[$queue] ?? ['default'];
 
         foreach ($priorities as $priority) {
             $queueName = $this->getQueueName($queue, $priority);
@@ -459,15 +466,38 @@ class RabbitMQHandler extends BaseHandler
      */
     private function clearQueue(string $queue): void
     {
+        // Purge delayed jobs first so they cannot expire into a queue
+        // that has already been purged.
+        $this->purgeQueueIfExists($this->getDelayQueueName($queue));
+
         $priorities = $this->config->queuePriorities[$queue] ?? ['default'];
 
         foreach ($priorities as $priority) {
-            $queueName = $this->getQueueName($queue, $priority);
+            $this->purgeQueueIfExists($this->getQueueName($queue, $priority));
+        }
+    }
 
+    /**
+     * Purge a queue without risking the handler's main channel.
+     */
+    private function purgeQueueIfExists(string $queue): void
+    {
+        $channel = $this->connection->channel();
+
+        try {
+            $channel->queue_purge($queue);
+        } catch (Throwable $e) {
+            // RabbitMQ closes the channel with 404 when the queue is missing.
+            if (! $e instanceof AMQPProtocolChannelException || $e->getCode() !== 404) {
+                throw $e;
+            }
+        } finally {
             try {
-                $this->channel->queue_purge($queueName);
+                if ($channel->is_open()) {
+                    $channel->close();
+                }
             } catch (Throwable) {
-                // Queue might not exist, ignore
+                // The broker may already have closed this disposable channel.
             }
         }
     }

@@ -44,43 +44,47 @@ final class PushAndPopWithDelayTest extends TestCase
         Time::setTestNow('2023-12-29 14:15:16');
 
         $handler = new $class($this->config);
-        $result  = $handler->setDelay(MINUTE)->push('queue-delay', 'success', ['key1' => 'value1']);
+        $handler->clear('queue-delay');
 
-        $this->assertNotNull($result);
+        try {
+            $result = $handler->setDelay(MINUTE)->push('queue-delay', 'success', ['key1' => 'value1']);
+            $this->assertTrue($result->getStatus());
 
-        $result = $handler->push('queue-delay', 'success', ['key2' => 'value2']);
+            $result = $handler->push('queue-delay', 'success', ['key2' => 'value2']);
+            $this->assertTrue($result->getStatus());
 
-        $this->assertNotNull($result);
+            if ($name === 'database') {
+                $this->seeInDatabase('queue_jobs', [
+                    'queue'        => 'queue-delay',
+                    'payload'      => json_encode(['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []]),
+                    'available_at' => 1703859376,
+                ]);
 
-        if ($name === 'database') {
-            $this->seeInDatabase('queue_jobs', [
-                'queue'        => 'queue-delay',
-                'payload'      => json_encode(['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []]),
-                'available_at' => 1703859376,
-            ]);
+                $this->seeInDatabase('queue_jobs', [
+                    'queue'        => 'queue-delay',
+                    'payload'      => json_encode(['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []]),
+                    'available_at' => 1703859316,
+                ]);
+            }
 
-            $this->seeInDatabase('queue_jobs', [
-                'queue'        => 'queue-delay',
-                'payload'      => json_encode(['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []]),
-                'available_at' => 1703859316,
-            ]);
+            $result = $handler->pop('queue-delay', ['default']);
+            $this->assertInstanceOf(QueueJob::class, $result);
+            $payload = ['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []];
+            $this->assertSame($payload, $result->payload);
+
+            $result = $handler->pop('queue-delay', ['default']);
+            $this->assertNull($result);
+
+            // add 1 minute
+            Time::setTestNow('2023-12-29 14:16:16');
+
+            $result = $handler->pop('queue-delay', ['default']);
+            $this->assertInstanceOf(QueueJob::class, $result);
+            $payload = ['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []];
+            $this->assertSame($payload, $result->payload);
+        } finally {
+            $handler->clear('queue-delay');
         }
-
-        $result = $handler->pop('queue-delay', ['default']);
-        $this->assertInstanceOf(QueueJob::class, $result);
-        $payload = ['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []];
-        $this->assertSame($payload, $result->payload);
-
-        $result = $handler->pop('queue-delay', ['default']);
-        $this->assertNull($result);
-
-        // add 1 minute
-        Time::setTestNow('2023-12-29 14:16:16');
-
-        $result = $handler->pop('queue-delay', ['default']);
-        $this->assertInstanceOf(QueueJob::class, $result);
-        $payload = ['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []];
-        $this->assertSame($payload, $result->payload);
     }
 
     public static function providePushAndPopWithDelay(): iterable

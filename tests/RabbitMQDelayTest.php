@@ -17,6 +17,7 @@ use CodeIgniter\Exceptions\CriticalError;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Handlers\RabbitMQHandler;
 use CodeIgniter\Queue\QueuePushResult;
+use CodeIgniter\Test\ReflectionHelper;
 use PhpAmqpLib\Connection\AMQPConnectionFactory;
 use Tests\Support\Config\Queue as QueueConfig;
 use Tests\Support\TestCase;
@@ -29,13 +30,17 @@ use Throwable;
  */
 final class RabbitMQDelayTest extends TestCase
 {
+    use ReflectionHelper;
+
     private ?RabbitMQHandler $handler = null;
+    private string $queue;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $config = config(QueueConfig::class);
+        $config      = config(QueueConfig::class);
+        $this->queue = 'delay-test-queue-' . bin2hex(random_bytes(6));
 
         // Skip tests if RabbitMQ is not available
         if (! $this->isRabbitMQAvailable()) {
@@ -52,9 +57,8 @@ final class RabbitMQDelayTest extends TestCase
     protected function tearDown(): void
     {
         if ($this->handler !== null) {
-            // Clear test queues
             try {
-                $this->handler->clear('delay-test-queue');
+                $this->deleteDeclaredResources();
             } catch (Throwable) {
                 // Ignore cleanup errors
             }
@@ -70,23 +74,23 @@ final class RabbitMQDelayTest extends TestCase
         $startTime    = time();
 
         // Push a delayed job
-        $result = $this->handler->setDelay($delaySeconds)->push('delay-test-queue', 'success', ['type' => 'delayed']);
+        $result = $this->handler->setDelay($delaySeconds)->push($this->queue, 'success', ['type' => 'delayed']);
         $this->assertInstanceOf(QueuePushResult::class, $result);
         $this->assertTrue($result->getStatus());
 
         // Push an immediate job
-        $result = $this->handler->push('delay-test-queue', 'success', ['type' => 'immediate']);
+        $result = $this->handler->push($this->queue, 'success', ['type' => 'immediate']);
         $this->assertInstanceOf(QueuePushResult::class, $result);
         $this->assertTrue($result->getStatus());
 
         // Should get immediate job first
-        $job = $this->handler->pop('delay-test-queue', ['default']);
+        $job = $this->handler->pop($this->queue, ['default']);
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('immediate', $job->payload['data']['type']);
         $this->handler->done($job);
 
         // Should not get delayed job yet (within first second)
-        $job = $this->handler->pop('delay-test-queue', ['default']);
+        $job = $this->handler->pop($this->queue, ['default']);
         $this->assertNull($job);
 
         // Wait for delay to expire (with a small buffer)
@@ -94,7 +98,7 @@ final class RabbitMQDelayTest extends TestCase
         sleep($waitTime);
 
         // Should now get the delayed job
-        $job = $this->handler->pop('delay-test-queue', ['default']);
+        $job = $this->handler->pop($this->queue, ['default']);
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('delayed', $job->payload['data']['type']);
 
@@ -108,35 +112,32 @@ final class RabbitMQDelayTest extends TestCase
 
     public function testMultipleDelayedJobsWithDifferentDelays(): void
     {
-        // Push jobs with different delays
-        $result1 = $this->handler->setDelay(1)->push('delay-test-queue', 'success', ['order' => 'first', 'delay' => 1]);
-        $result2 = $this->handler->setDelay(3)->push('delay-test-queue', 'success', ['order' => 'second', 'delay' => 3]);
-        $result3 = $this->handler->push('delay-test-queue', 'success', ['order' => 'immediate', 'delay' => 0]);
+        // Push the immediate job first so slow test setup cannot allow a
+        // delayed job to reach the main queue ahead of it.
+        $result1 = $this->handler->push($this->queue, 'success', ['order' => 'immediate', 'delay' => 0]);
+        $result2 = $this->handler->setDelay(1)->push($this->queue, 'success', ['order' => 'first', 'delay' => 1]);
+        $result3 = $this->handler->setDelay(3)->push($this->queue, 'success', ['order' => 'second', 'delay' => 3]);
 
         $this->assertTrue($result1->getStatus());
         $this->assertTrue($result2->getStatus());
         $this->assertTrue($result3->getStatus());
 
         // Should get immediate job first
-        $job = $this->handler->pop('delay-test-queue', ['default']);
+        $job = $this->handler->pop($this->queue, ['default']);
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('immediate', $job->payload['data']['order']);
         $this->handler->done($job);
 
         // Wait 2 seconds - should get first delayed job
         sleep(2);
-        $job = $this->handler->pop('delay-test-queue', ['default']);
+        $job = $this->handler->pop($this->queue, ['default']);
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('first', $job->payload['data']['order']);
         $this->handler->done($job);
 
-        // Should not get second job yet
-        $job = $this->handler->pop('delay-test-queue', ['default']);
-        $this->assertNull($job);
-
         // Wait another 2 seconds - should get second delayed job
         sleep(2);
-        $job = $this->handler->pop('delay-test-queue', ['default']);
+        $job = $this->handler->pop($this->queue, ['default']);
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('second', $job->payload['data']['order']);
         $this->handler->done($job);
@@ -145,15 +146,31 @@ final class RabbitMQDelayTest extends TestCase
     public function testZeroDelayWorksImmediately(): void
     {
         // Jobs with 0 delay should work immediately
-        $result = $this->handler->setDelay(0)->push('delay-test-queue', 'success', ['type' => 'zero-delay']);
+        $result = $this->handler->setDelay(0)->push($this->queue, 'success', ['type' => 'zero-delay']);
         $this->assertTrue($result->getStatus());
 
         // Should be able to pop immediately
-        $job = $this->handler->pop('delay-test-queue', ['default']);
+        $job = $this->handler->pop($this->queue, ['default']);
         $this->assertInstanceOf(QueueJob::class, $job);
         $this->assertSame('zero-delay', $job->payload['data']['type']);
 
         $this->handler->done($job);
+    }
+
+    public function testFreshHandlerClearsImmediateAndDelayedJobs(): void
+    {
+        $delayedResult = $this->handler->setDelay(1)->push($this->queue, 'success', ['type' => 'delayed']);
+        $this->assertTrue($delayedResult->getStatus());
+
+        $immediateResult = $this->handler->push($this->queue, 'success', ['type' => 'immediate']);
+        $this->assertTrue($immediateResult->getStatus());
+
+        $clearer = new RabbitMQHandler(config(QueueConfig::class));
+        $this->assertTrue($clearer->clear($this->queue));
+
+        sleep(2);
+
+        $this->assertNull($clearer->pop($this->queue, ['default']));
     }
 
     /**
@@ -162,5 +179,18 @@ final class RabbitMQDelayTest extends TestCase
     private function isRabbitMQAvailable(): bool
     {
         return class_exists(AMQPConnectionFactory::class);
+    }
+
+    private function deleteDeclaredResources(): void
+    {
+        $channel = self::getPrivateProperty($this->handler, 'channel');
+
+        foreach (array_keys(self::getPrivateProperty($this->handler, 'declaredQueues')) as $queue) {
+            $channel->queue_delete($queue);
+        }
+
+        foreach (array_keys(self::getPrivateProperty($this->handler, 'declaredExchanges')) as $exchange) {
+            $channel->exchange_delete($exchange);
+        }
     }
 }

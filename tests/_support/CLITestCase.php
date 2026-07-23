@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\Test\Filters\CITestStreamFilter;
 use CodeIgniter\Test\ReflectionHelper;
 
 abstract class CLITestCase extends TestCase
@@ -21,6 +22,14 @@ abstract class CLITestCase extends TestCase
     use ReflectionHelper;
 
     private array $lines = [];
+
+    protected function tearDown(): void
+    {
+        CITestStreamFilter::removeErrorFilter();
+        CITestStreamFilter::removeOutputFilter();
+
+        parent::tearDown();
+    }
 
     protected function parseOutput(string $output): string
     {
