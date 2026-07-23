@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -850,6 +850,7 @@
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The <a href="https://codeigniter.com/user_guide/database/transactions.html#strict-mode">Strict Mode</a> for the given <code>dbGroup</code> is automatically disabled - due to the nature of the queue worker.</p>
+<p>When using <strong>SQLite3</strong> with multiple worker processes, configure <code>busyTimeout</code> in the selected connection group. This lets a worker wait briefly when another process holds SQLite's write lock instead of failing immediately with <code>SQLITE_BUSY</code>.</p>
 </div>
 <h3 id="redis">$redis</h3>
 <p>The configuration settings for <code>redis</code> handler. You need to have a <a href="https://github.com/phpredis/phpredis">ext-redis</a> installed to use it.</p>
@@ -1041,7 +1042,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "content.code.copy", "navigation.footer", "content.action.edit", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
         <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/highlight.min.js"></script>
       
