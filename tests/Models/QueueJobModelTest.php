@@ -114,4 +114,22 @@ final class QueueJobModelTest extends TestCase
         $this->seeInDatabase('queue_jobs', ['id' => 2, 'status' => Status::RESERVED->value]);
         $this->seeInDatabase('queue_jobs', ['id' => 3, 'status' => Status::RESERVED->value]);
     }
+
+    public function testSetPriorityEscapesPriorityValues(): void
+    {
+        $model   = model(QueueJobModel::class);
+        $method  = $this->getPrivateMethodInvoker($model, 'setPriority');
+        $builder = $model->builder();
+
+        $priority = [
+            'priority_key' => "default' THEN 0 ELSE 1 END --",
+            'default',
+        ];
+
+        $result = $method($builder, $priority);
+        $sql    = (string) $result->getCompiledSelect();
+
+        $this->assertStringContainsString($model->db->escape($priority['priority_key']), $sql);
+        $this->assertStringNotContainsString('priority_key', $sql);
+    }
 }
