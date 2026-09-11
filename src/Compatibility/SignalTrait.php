@@ -90,9 +90,7 @@ if (trait_exists('CodeIgniter\CLI\SignalTrait')) {
          */
         protected function isPosixAvailable(): bool
         {
-            if (self::$isPosixAvailable === null) {
-                self::$isPosixAvailable = is_windows() ? false : extension_loaded('posix');
-            }
+            self::$isPosixAvailable ??= is_windows() ? false : extension_loaded('posix');
 
             return self::$isPosixAvailable;
         }
