@@ -18,14 +18,14 @@ namespace Tests\Support\Config;
  *
  * Provides a basic registrar class for testing BaseConfig registration functions.
  */
-class Registrar
+final class Registrar
 {
     /**
      * DB config array for testing purposes.
      *
      * @var array<string, array<string, array<string, bool|int|string>|bool|int|string>>
      */
-    protected static array $dbConfig = [
+    private static array $dbConfig = [
         'MySQLi' => [
             'DSN'      => '',
             'hostname' => '127.0.0.1',

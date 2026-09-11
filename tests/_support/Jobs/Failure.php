@@ -16,7 +16,7 @@ namespace Tests\Support\Jobs;
 use CodeIgniter\Queue\BaseJob;
 use Exception;
 
-class Failure extends BaseJob
+final class Failure extends BaseJob
 {
     /**
      * @throws Exception

@@ -89,7 +89,7 @@ final class DatabaseHandlerTest extends TestCase
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue',
             'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value'], 'metadata' => []]),
-            'available_at' => 1703859316,
+            'available_at' => 1_703_859_316,
         ]);
     }
 
@@ -108,7 +108,7 @@ final class DatabaseHandlerTest extends TestCase
             'queue'        => 'queue',
             'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value'], 'metadata' => []]),
             'priority'     => 'high',
-            'available_at' => 1703859316,
+            'available_at' => 1_703_859_316,
         ]);
     }
 
@@ -127,7 +127,7 @@ final class DatabaseHandlerTest extends TestCase
             'queue'        => 'queue',
             'payload'      => json_encode(['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []]),
             'priority'     => 'low',
-            'available_at' => 1703859316,
+            'available_at' => 1_703_859_316,
         ]);
 
         $result = $handler->setPriority('high')->push('queue', 'success', ['key2' => 'value2']);
@@ -137,7 +137,7 @@ final class DatabaseHandlerTest extends TestCase
             'queue'        => 'queue',
             'payload'      => json_encode(['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []]),
             'priority'     => 'high',
-            'available_at' => 1703859316,
+            'available_at' => 1_703_859_316,
         ]);
 
         $result = $handler->pop('queue', ['high', 'low']);
@@ -163,7 +163,7 @@ final class DatabaseHandlerTest extends TestCase
 
         $this->assertTrue($result->getStatus());
 
-        $availableAt = 1703859376;
+        $availableAt = 1_703_859_376;
 
         $this->seeInDatabase('queue_jobs', [
             'queue'        => 'queue-delay',
@@ -202,7 +202,7 @@ final class DatabaseHandlerTest extends TestCase
                     ],
                 ],
             ]),
-            'available_at' => 1703859316,
+            'available_at' => 1_703_859_316,
         ]);
     }
 
@@ -244,7 +244,7 @@ final class DatabaseHandlerTest extends TestCase
                     ],
                 ],
             ]),
-            'available_at' => 1703859316 + 60, // Adding delay to available_at
+            'available_at' => 1_703_859_316 + 60, // Adding delay to available_at
         ]);
     }
 
@@ -379,7 +379,7 @@ final class DatabaseHandlerTest extends TestCase
             'id'         => 2,
             'connection' => 'database',
             'queue'      => 'queue1',
-            'failed_at'  => 1703859316,
+            'failed_at'  => 1_703_859_316,
         ]);
     }
 

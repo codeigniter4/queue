@@ -21,7 +21,7 @@ use CodeIgniter\Queue\Handlers\RedisHandler;
 use Tests\Support\Jobs\Failure;
 use Tests\Support\Jobs\Success;
 
-class Queue extends BaseQueue
+final class Queue extends BaseQueue
 {
     /**
      * Default handler.

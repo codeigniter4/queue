@@ -15,7 +15,7 @@ namespace Tests\Support\Jobs;
 
 use CodeIgniter\Queue\BaseJob;
 
-class Success extends BaseJob
+final class Success extends BaseJob
 {
     protected int $retryAfter = 6;
     protected int $tries      = 3;

@@ -20,7 +20,8 @@
         "codeigniter4/framework": "^4.3",
         "predis/predis": "^2.0 || ^3.0",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "php-amqplib/php-amqplib": "^3.7"
+        "php-amqplib/php-amqplib": "^3.7",
+        "boundwize/structarmed": "^0.17.3"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
@@ -34,7 +35,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests"
+            "Tests\\": "tests",
+            "Tests\\Support\\": "tests/_support"
         }
     },
     "suggest": {
@@ -66,7 +68,7 @@
         "cs-fix": "php-cs-fixer fix --ansi --verbose --diff",
         "style": "@cs-fix",
         "deduplicate": "phpcpd src/ tests/",
-        "inspect": "deptrac analyze --cache-file=build/deptrac.cache",
+        "inspect": "vendor/bin/structarmed analyze",
         "mutate": "infection --threads=2 --skip-initial-tests --coverage=build/phpunit",
         "test": "phpunit"
     }

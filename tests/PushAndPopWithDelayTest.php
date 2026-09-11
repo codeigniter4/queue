@@ -57,13 +57,13 @@ final class PushAndPopWithDelayTest extends TestCase
                 $this->seeInDatabase('queue_jobs', [
                     'queue'        => 'queue-delay',
                     'payload'      => json_encode(['job' => 'success', 'data' => ['key1' => 'value1'], 'metadata' => []]),
-                    'available_at' => 1703859376,
+                    'available_at' => 1_703_859_376,
                 ]);
 
                 $this->seeInDatabase('queue_jobs', [
                     'queue'        => 'queue-delay',
                     'payload'      => json_encode(['job' => 'success', 'data' => ['key2' => 'value2'], 'metadata' => []]),
-                    'available_at' => 1703859316,
+                    'available_at' => 1_703_859_316,
                 ]);
             }
 

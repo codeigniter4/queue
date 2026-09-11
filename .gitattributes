@@ -20,7 +20,7 @@ CONTRIBUTING.md export-ignore
 tests/AutoReview/ export-ignore
 tests/system/ export-ignore
 utils/ export-ignore
-deptrac.yaml export-ignore
+structarmed.php export-ignore
 rector.php export-ignore
 phpunit.xml.dist export-ignore
 phpstan-baseline.neon.dist export-ignore
