@@ -20,7 +20,7 @@ use CodeIgniter\Queue\Enums\Status;
 use CodeIgniter\Queue\Models\QueueJobFailedModel;
 use CodeIgniter\Queue\Models\QueueJobModel;
 
-class TestDatabaseQueueSeeder extends Seeder
+final class TestDatabaseQueueSeeder extends Seeder
 {
     public function run(): void
     {

@@ -24,7 +24,7 @@ use RedisException;
 use ReflectionException;
 use Tests\Support\Config\Queue as QueueConfig;
 
-class TestRedisQueueSeeder extends Seeder
+final class TestRedisQueueSeeder extends Seeder
 {
     /**
      * @throws RedisException|ReflectionException

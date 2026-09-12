@@ -73,7 +73,7 @@ final class ChainBuilderTest extends TestCase
                     'queue' => 'queue',
                 ],
             ]),
-            'available_at' => 1703859316,
+            'available_at' => 1_703_859_316,
         ]);
     }
 
@@ -116,7 +116,7 @@ final class ChainBuilderTest extends TestCase
                     ],
                 ],
             ]),
-            'available_at' => 1703859316,
+            'available_at' => 1_703_859_316,
         ]);
     }
 
@@ -154,7 +154,7 @@ final class ChainBuilderTest extends TestCase
                     ],
                 ],
             ]),
-            'available_at' => 1703859316,
+            'available_at' => 1_703_859_316,
         ]);
     }
 }

@@ -4,7 +4,7 @@ Queues for the CodeIgniter 4 framework.
 
 [![PHPUnit](https://github.com/codeigniter4/queue/actions/workflows/phpunit.yml/badge.svg)](https://github.com/codeigniter4/queue/actions/workflows/phpunit.yml)
 [![PHPStan](https://github.com/codeigniter4/queue/actions/workflows/phpstan.yml/badge.svg)](https://github.com/codeigniter4/queue/actions/workflows/phpstan.yml)
-[![Deptrac](https://github.com/codeigniter4/queue/actions/workflows/deptrac.yml/badge.svg)](https://github.com/codeigniter4/queue/actions/workflows/deptrac.yml)
+[![StructArmed](https://github.com/codeigniter4/queue/actions/workflows/structarmed.yml/badge.svg)](https://github.com/codeigniter4/queue/actions/workflows/structarmed.yml)
 [![Coverage Status](https://coveralls.io/repos/github/codeigniter4/queue/badge.svg?branch=develop)](https://coveralls.io/github/codeigniter4/queue?branch=develop)
 
 ![PHP](https://img.shields.io/badge/PHP-%5E8.2-blue)
