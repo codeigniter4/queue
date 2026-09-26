@@ -21,7 +21,7 @@
         "predis/predis": "^2.0 || ^3.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "php-amqplib/php-amqplib": "^3.7",
-        "boundwize/structarmed": "^0.17.3"
+        "boundwize/structarmed": "^0.18.0"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
