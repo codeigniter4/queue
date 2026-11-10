@@ -132,4 +132,70 @@ final class QueueJobModelTest extends TestCase
         $this->assertStringContainsString($model->db->escape($priority['priority_key']), $sql);
         $this->assertStringNotContainsString('priority_key', $sql);
     }
+
+    public function testPopWithLockReturnsNullAndClosesTransactionWhenQueryFails(): void
+    {
+        $model      = model(QueueJobModel::class);
+        $oldDBDebug = $this->getPrivateProperty($model->db, 'DBDebug');
+        $this->setPrivateProperty($model->db, 'DBDebug', false);
+
+        try {
+            $testModel = new class ($model->db) extends QueueJobModel {
+                protected $table = 'non_existent_table_xyz';
+            };
+            $method = $this->getPrivateMethodInvoker($testModel, 'popWithLock');
+
+            $result = $method('queue1', ['default']);
+
+            $this->assertNull($result);
+            $this->assertSame(0, $this->getPrivateProperty($testModel->db, 'transDepth'));
+        } finally {
+            $this->setPrivateProperty($model->db, 'DBDebug', $oldDBDebug);
+        }
+    }
+
+    public function testPopWithLockRollsBackAndReturnsNullWhenUpdateFails(): void
+    {
+        $existing = model(QueueJobModel::class);
+        $model    = $this->getMockBuilder(QueueJobModel::class)
+            ->setConstructorArgs([$existing->db])
+            ->onlyMethods(['update'])
+            ->getMock();
+        $model->method('update')->willReturn(false);
+
+        $method = $this->getPrivateMethodInvoker($model, 'popWithLock');
+        $result = $method('queue1', ['default']);
+
+        $this->assertNull($result);
+        $this->assertSame(0, $this->getPrivateProperty($model->db, 'transDepth'));
+        $this->seeInDatabase('queue_jobs', [
+            'id'     => 2,
+            'status' => Status::PENDING->value,
+        ]);
+    }
+
+    public function testPopWithLockRollsBackAndReturnsNullWhenAffectedRowsIsNotOne(): void
+    {
+        $existing = model(QueueJobModel::class);
+        $model    = $this->getMockBuilder(QueueJobModel::class)
+            ->setConstructorArgs([$existing->db])
+            ->onlyMethods(['update'])
+            ->getMock();
+        $model->method('update')->willReturnCallback(static function () use ($model): bool {
+            // Update 0 rows so affectedRows() is 0 instead of 1
+            $model->db->table('queue_jobs')->where('id', 999999)->update(['status' => 99]);
+
+            return true;
+        });
+
+        $method = $this->getPrivateMethodInvoker($model, 'popWithLock');
+        $result = $method('queue1', ['default']);
+
+        $this->assertNull($result);
+        $this->assertSame(0, $this->getPrivateProperty($model->db, 'transDepth'));
+        $this->seeInDatabase('queue_jobs', [
+            'id'     => 2,
+            'status' => Status::PENDING->value,
+        ]);
+    }
 }
