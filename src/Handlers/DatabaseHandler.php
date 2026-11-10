@@ -94,7 +94,7 @@ class DatabaseHandler extends BaseHandler
             return QueuePushResult::failure($e->getMessage());
         }
 
-        if ($jobId === 0) {
+        if ($jobId === false || $jobId === 0 || ! is_numeric($jobId)) {
             $err = new RuntimeException('Failed to insert job into the database.');
             QueueEventManager::jobPushFailed(
                 handler: $this->name(),
@@ -107,7 +107,7 @@ class DatabaseHandler extends BaseHandler
         }
 
         // Set the job ID for the successful push event
-        $queueJob->id = $jobId;
+        $queueJob->id = (int) $jobId;
 
         // Emit job pushed event
         QueueEventManager::jobPushed(
@@ -116,7 +116,7 @@ class DatabaseHandler extends BaseHandler
             job: $queueJob,
         );
 
-        return QueuePushResult::success($jobId);
+        return QueuePushResult::success((int) $jobId);
     }
 
     /**
