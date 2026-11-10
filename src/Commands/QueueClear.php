@@ -68,7 +68,13 @@ class QueueClear extends BaseCommand
             return EXIT_ERROR;
         }
 
-        service('queue')->clear($queue);
+        $result = service('queue')->clear($queue);
+
+        if (! $result) {
+            CLI::error('Failed to clear the queue: ' . $queue . '.');
+
+            return EXIT_ERROR;
+        }
 
         CLI::print('Queue ', 'yellow');
         CLI::print($queue, 'light_yellow');

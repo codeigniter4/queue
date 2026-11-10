@@ -247,22 +247,61 @@ class RedisHandler extends BaseHandler
      */
     public function clear(?string $queue = null): bool
     {
-        if ($queue !== null) {
-            $result = ($keys = $this->redis->keys("queues:{$queue}:*")) ? (int) $this->redis->del($keys) > 0 : true;
-        } elseif ($keys = $this->redis->keys('queues:*')) {
-            $result = (int) $this->redis->del($keys) > 0;
-        } else {
-            $result = true;
+        try {
+            if ($queue !== null) {
+                // Reject glob metacharacters before building the key pattern.
+                $this->validateQueue($queue);
+            }
+
+            $pattern = $queue === null ? 'queues:*' : "queues:{$queue}:*";
+            $keys    = $this->redis->keys($pattern);
+
+            if ($keys === false) {
+                log_message('error', 'Redis clear error: unable to list keys for pattern ' . $pattern . '.');
+
+                return false;
+            }
+
+            if ($keys !== []) {
+                // KEYS returns full key names, including the client prefix.
+                // DEL would apply the prefix again, so strip it first.
+                $prefix = $this->normalizePrefix($this->redis->getOption(Redis::OPT_PREFIX));
+
+                if ($prefix !== '') {
+                    $prefixLength = strlen($prefix);
+
+                    $keys = array_map(
+                        static fn (string $key): string => str_starts_with($key, $prefix) ? substr($key, $prefixLength) : $key,
+                        $keys,
+                    );
+                }
+
+                if ($this->redis->del($keys) === false) {
+                    log_message('error', 'Redis clear error: unable to delete keys for pattern ' . $pattern . '.');
+
+                    return false;
+                }
+            }
+        } catch (Throwable $e) {
+            log_message('error', 'Redis clear error: ' . $e->getMessage());
+
+            return false;
         }
 
-        if ($result) {
-            // Emit queue cleared event
-            QueueEventManager::queueCleared(
-                handler: $this->name(),
-                queue: $queue,
-            );
-        }
+        // Emit queue cleared event
+        QueueEventManager::queueCleared(
+            handler: $this->name(),
+            queue: $queue,
+        );
 
-        return $result;
+        return true;
+    }
+
+    /**
+     * Normalize the value returned by Redis::getOption() to a string prefix.
+     */
+    private function normalizePrefix(mixed $prefix): string
+    {
+        return is_string($prefix) ? $prefix : '';
     }
 }
