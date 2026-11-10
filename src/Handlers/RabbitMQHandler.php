@@ -343,17 +343,18 @@ class RabbitMQHandler extends BaseHandler
                 false,
             );
 
+            // Bind queues to the exchange only once, together with the
+            // declaration. Re-binding on every publish is unnecessary traffic.
+            $priorities = $this->config->queuePriorities[$queue] ?? ['default'];
+
+            foreach ($priorities as $priority) {
+                $queueName  = $this->getQueueName($queue, $priority);
+                $routingKey = $this->getRoutingKey($queue, $priority);
+
+                $this->channel->queue_bind($queueName, $exchangeName, $routingKey);
+            }
+
             $this->declaredExchanges[$exchangeName] = true;
-        }
-
-        // Bind queues to exchanges
-        $priorities = $this->config->queuePriorities[$queue] ?? ['default'];
-
-        foreach ($priorities as $priority) {
-            $queueName  = $this->getQueueName($queue, $priority);
-            $routingKey = $this->getRoutingKey($queue, $priority);
-
-            $this->channel->queue_bind($queueName, $exchangeName, $routingKey);
         }
     }
 
@@ -405,11 +406,16 @@ class RabbitMQHandler extends BaseHandler
      */
     private function publishDelayedMessage(string $queue, QueueJob $queueJob, string $priority, int $delaySeconds): void
     {
+        // Make sure the exchange exists. later() may be called by a worker that
+        // never went through push(), so we cannot rely on push() declaring it.
+        $this->declareExchange($queue);
+
         $delayQueueName = $this->getDelayQueueName($queue, $priority);
         $exchangeName   = $this->getExchangeName($queue); // Use the main exchange
         $routingKey     = $this->getRoutingKey($queue, $priority);
 
-        // Declare delay queue for this priority (without queue-level TTL)
+        // Declare and bind delay queue for this priority (without queue-level TTL).
+        // Binding only happens on the first publish for this delay queue.
         if (! isset($this->declaredQueues[$delayQueueName])) {
             $this->channel->queue_declare(
                 $delayQueueName,
@@ -424,11 +430,10 @@ class RabbitMQHandler extends BaseHandler
                 ]),
             );
 
+            $this->channel->queue_bind($delayQueueName, $exchangeName, $delayQueueName);
+
             $this->declaredQueues[$delayQueueName] = true;
         }
-
-        // Bind delay queue to main exchange with delay routing key
-        $this->channel->queue_bind($delayQueueName, $exchangeName, $delayQueueName);
 
         // Create message with per-message expiration (milliseconds string)
         $delayedMessage = $this->createMessage($queueJob, [
@@ -479,6 +484,10 @@ class RabbitMQHandler extends BaseHandler
             $this->purgeQueueIfExists($this->getDelayQueueName($queue, $priority));
             $this->purgeQueueIfExists($this->getQueueName($queue, $priority));
         }
+
+        // Purge the pre-priority delay queue so jobs scheduled before the
+        // per-priority delay queues were introduced cannot leak after a clear.
+        $this->purgeQueueIfExists($this->getLegacyDelayQueueName($queue));
     }
 
     /**
@@ -528,6 +537,14 @@ class RabbitMQHandler extends BaseHandler
     private function getDelayQueueName(string $queue, string $priority): string
     {
         return "queue_{$queue}_{$priority}_delay";
+    }
+
+    /**
+     * Get the legacy delay queue name (before per-priority delay queues).
+     */
+    private function getLegacyDelayQueueName(string $queue): string
+    {
+        return "queue_{$queue}_delay";
     }
 
     /**

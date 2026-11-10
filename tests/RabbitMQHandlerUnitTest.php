@@ -60,8 +60,16 @@ final class RabbitMQHandlerUnitTest extends TestCase
         $declaredQueue = null;
         /** @var AMQPTable|null $declaredArgs */
         $declaredArgs = null;
+        $bindings     = [];
+        $exchanges    = [];
 
         $channel = $this->createMock(AMQPChannel::class);
+        $channel->expects($this->once())
+            ->method('exchange_declare')
+            ->willReturnCallback(static function (string $exchange) use (&$exchanges): void {
+                $exchanges[] = $exchange;
+            });
+
         $channel->expects($this->once())
             ->method('queue_declare')
             ->willReturnCallback(static function ($queue, $passive, $durable, $exclusive, $autoDelete, $nowait, $arguments) use (&$declaredQueue, &$declaredArgs) {
@@ -71,9 +79,10 @@ final class RabbitMQHandlerUnitTest extends TestCase
                 return [$queue, 0, 0];
             });
 
-        $channel->expects($this->once())
-            ->method('queue_bind')
-            ->with('queue_emails_high_delay', 'queue_emails_exchange', 'queue_emails_high_delay');
+        $channel->method('queue_bind')
+            ->willReturnCallback(static function (string $queueName, string $exchange, string $routingKey) use (&$bindings): void {
+                $bindings[] = [$queueName, $exchange, $routingKey];
+            });
 
         $channel->expects($this->once())
             ->method('basic_publish');
@@ -97,6 +106,46 @@ final class RabbitMQHandlerUnitTest extends TestCase
         $nativeArgs = $declaredArgs->getNativeData();
         $this->assertSame('queue_emails_exchange', $nativeArgs['x-dead-letter-exchange']);
         $this->assertSame('emails.high', $nativeArgs['x-dead-letter-routing-key']);
+
+        // The exchange is declared because later() may run on a worker that never pushed.
+        $this->assertSame(['queue_emails_exchange'], $exchanges);
+
+        $delayBind = ['queue_emails_high_delay', 'queue_emails_exchange', 'queue_emails_high_delay'];
+        $this->assertCount(1, array_keys($bindings, $delayBind, true), 'The delay queue must be bound exactly once.');
+    }
+
+    public function testPublishDelayedMessageBindsDelayQueueOnlyOnceAcrossPublications(): void
+    {
+        $delayBindCount = 0;
+
+        $channel = $this->createMock(AMQPChannel::class);
+        $channel->method('queue_declare')
+            ->willReturn(['queue_emails_high_delay', 0, 0]);
+        $channel->method('queue_bind')
+            ->willReturnCallback(static function (string $queueName) use (&$delayBindCount): void {
+                if ($queueName === 'queue_emails_high_delay') {
+                    $delayBindCount++;
+                }
+            });
+        $channel->expects($this->exactly(2))
+            ->method('basic_publish');
+
+        $handler = $this->createHandlerWithMocks($channel);
+        $invoker = $this->getPrivateMethodInvoker($handler, 'publishDelayedMessage');
+
+        $job = new QueueJob([
+            'id'       => 1,
+            'queue'    => 'emails',
+            'payload'  => new Payload('success', ['foo' => 'bar']),
+            'priority' => 'high',
+            'status'   => Status::PENDING->value,
+            'attempts' => 0,
+        ]);
+
+        $invoker('emails', $job, 'high', 30);
+        $invoker('emails', $job, 'high', 60);
+
+        $this->assertSame(1, $delayBindCount);
     }
 
     public function testLaterPublishesDelayedMessageBeforeRejectingOriginalMessage(): void
@@ -209,6 +258,8 @@ final class RabbitMQHandlerUnitTest extends TestCase
         $this->assertContains('reports_high', $purgedQueues);
         $this->assertContains('queue_reports_low_delay', $purgedQueues);
         $this->assertContains('reports_low', $purgedQueues);
+        // Legacy (pre-priority) delay queue must be purged as well.
+        $this->assertContains('queue_reports_delay', $purgedQueues);
     }
 
     public function testPushResetsPriorityAndDelayInFinallyBlockOnFailure(): void
