@@ -144,14 +144,12 @@ class RabbitMQHandler extends BaseHandler
                     $this->publishMessage($queue, $message, $routingKey);
                 } else {
                     // Use TTL + dead letter pattern for actual delays
-                    $this->publishDelayedMessage($queue, $queueJob, $routingKey, $realDelay);
+                    $this->publishDelayedMessage($queue, $queueJob, $queueJob->priority, $realDelay);
                 }
             } else {
                 $message = $this->createMessage($queueJob);
                 $this->publishMessage($queue, $message, $routingKey);
             }
-
-            $this->priority = $this->delay = null;
 
             // Emit job pushed event
             QueueEventManager::jobPushed(
@@ -171,6 +169,9 @@ class RabbitMQHandler extends BaseHandler
             );
 
             return QueuePushResult::failure($e->getMessage());
+        } finally {
+            // Never leak priority or delay into the next push operation.
+            $this->priority = $this->delay = null;
         }
     }
 
@@ -209,14 +210,14 @@ class RabbitMQHandler extends BaseHandler
             $queueJob->status       = Status::PENDING->value;
             $queueJob->available_at = Time::now()->addSeconds($seconds);
 
-            // Reject the original message without requeue
+            // Publish the delayed copy first. If publishing fails the original
+            // message must stay unacknowledged so the job is not lost.
+            $this->publishDelayedMessage($queueJob->queue, $queueJob, $queueJob->priority, $seconds);
+
+            // Reject the original message only after the replacement exists.
             if (isset($queueJob->amqpDeliveryTag)) {
                 $this->channel->basic_nack($queueJob->amqpDeliveryTag, false, false);
             }
-
-            $routingKey = $this->getRoutingKey($queueJob->queue, $queueJob->priority);
-
-            $this->publishDelayedMessage($queueJob->queue, $queueJob, $routingKey, $seconds);
 
             return true;
         } catch (Throwable $e) {
@@ -398,13 +399,17 @@ class RabbitMQHandler extends BaseHandler
 
     /**
      * Publish message with delay using per-message TTL + dead letter pattern.
+     *
+     * Delay queues are separated per priority so the dead-letter routing key
+     * always points at the priority bucket the job belongs to.
      */
-    private function publishDelayedMessage(string $queue, QueueJob $queueJob, string $routingKey, int $delaySeconds): void
+    private function publishDelayedMessage(string $queue, QueueJob $queueJob, string $priority, int $delaySeconds): void
     {
-        $delayQueueName = $this->getDelayQueueName($queue);
+        $delayQueueName = $this->getDelayQueueName($queue, $priority);
         $exchangeName   = $this->getExchangeName($queue); // Use the main exchange
+        $routingKey     = $this->getRoutingKey($queue, $priority);
 
-        // Declare single delay queue (without queue-level TTL)
+        // Declare delay queue for this priority (without queue-level TTL)
         if (! isset($this->declaredQueues[$delayQueueName])) {
             $this->channel->queue_declare(
                 $delayQueueName,
@@ -466,13 +471,12 @@ class RabbitMQHandler extends BaseHandler
      */
     private function clearQueue(string $queue): void
     {
-        // Purge delayed jobs first so they cannot expire into a queue
-        // that has already been purged.
-        $this->purgeQueueIfExists($this->getDelayQueueName($queue));
-
         $priorities = $this->config->queuePriorities[$queue] ?? ['default'];
 
         foreach ($priorities as $priority) {
+            // Purge delayed jobs first so they cannot expire into a queue
+            // that has already been purged.
+            $this->purgeQueueIfExists($this->getDelayQueueName($queue, $priority));
             $this->purgeQueueIfExists($this->getQueueName($queue, $priority));
         }
     }
@@ -519,11 +523,11 @@ class RabbitMQHandler extends BaseHandler
     }
 
     /**
-     * Get delay queue name (single queue per logical queue).
+     * Get delay queue name (one queue per logical queue and priority).
      */
-    private function getDelayQueueName(string $queue): string
+    private function getDelayQueueName(string $queue, string $priority): string
     {
-        return "queue_{$queue}_delay";
+        return "queue_{$queue}_{$priority}_delay";
     }
 
     /**
