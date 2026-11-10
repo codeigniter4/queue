@@ -348,6 +348,37 @@ final class RedisHandlerTest extends TestCase
         $this->assertTrue($result);
     }
 
+    public function testClearWithPrefix(): void
+    {
+        $config                  = clone $this->config;
+        $config->redis['prefix'] = 'app:';
+
+        $handler = new RedisHandler($config);
+        $handler->push('queue1', 'success', ['key' => 'value']);
+
+        $redis = self::getPrivateProperty($handler, 'redis');
+        $this->assertGreaterThan(0, $redis->zCard('queues:queue1:default'));
+
+        $result = $handler->clear('queue1');
+        $this->assertTrue($result);
+        $this->assertSame(0, $redis->zCard('queues:queue1:default'));
+
+        // Clear all queues with prefix
+        $handler->push('queue1', 'success', ['key' => 'value']);
+        $this->assertTrue($handler->clear());
+        $this->assertCount(0, $redis->keys('queues:*'));
+    }
+
+    public function testClearWithInvalidQueueNameReturnsFalse(): void
+    {
+        $handler = new RedisHandler($this->config);
+
+        $this->assertFalse($handler->clear('queue*'));
+        $this->assertFalse($handler->clear('queue?'));
+        $this->assertFalse($handler->clear('queue!invalid'));
+        $this->assertFalse($handler->clear(str_repeat('a', 65)));
+    }
+
     public function testRetry(): void
     {
         $handler = new RedisHandler($this->config);

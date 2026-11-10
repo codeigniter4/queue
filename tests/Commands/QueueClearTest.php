@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace Tests\Commands;
 
+use CodeIgniter\Queue\Interfaces\QueueInterface;
 use CodeIgniter\Test\Filters\CITestStreamFilter;
+use Config\Services;
 use Tests\Support\CLITestCase;
 
 /**
@@ -45,5 +47,26 @@ final class QueueClearTest extends CLITestCase
         CITestStreamFilter::removeOutputFilter();
 
         $this->assertSame('Queue test has been cleared.', $output);
+    }
+
+    public function testRunFailedWhenClearReturnsFalse(): void
+    {
+        $queueMock = $this->createMock(QueueInterface::class);
+        $queueMock->expects($this->once())
+            ->method('clear')
+            ->with('test')
+            ->willReturn(false);
+
+        Services::injectMock('queue', $queueMock);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addErrorFilter();
+
+        $this->assertNotFalse(command('queue:clear test'));
+        $output = $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeErrorFilter();
+
+        $this->assertSame('Failed to clear the queue: test.', $output);
     }
 }
