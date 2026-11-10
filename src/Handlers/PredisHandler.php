@@ -25,6 +25,7 @@ use CodeIgniter\Queue\Payloads\PayloadMetadata;
 use CodeIgniter\Queue\QueuePushResult;
 use Exception;
 use Predis\Client;
+use Predis\Command\Processor\KeyPrefixProcessor;
 use RuntimeException;
 use Throwable;
 
@@ -206,22 +207,61 @@ class PredisHandler extends BaseHandler
      */
     public function clear(?string $queue = null): bool
     {
-        if ($queue !== null) {
-            $keys   = $this->predis->keys("queues:{$queue}:*");
-            $result = $keys !== [] ? $this->predis->del($keys) > 0 : true;
-        } else {
-            $keys   = $this->predis->keys('queues:*');
-            $result = $keys !== [] ? $this->predis->del($keys) > 0 : true;
+        try {
+            if ($queue !== null) {
+                // Reject glob metacharacters before building the key pattern.
+                $this->validateQueue($queue);
+            }
+
+            $pattern = $queue === null ? 'queues:*' : "queues:{$queue}:*";
+            $keys    = $this->predis->keys($pattern);
+
+            if ($keys !== []) {
+                // KEYS returns full key names, including the client prefix.
+                // DEL would apply the prefix again, so strip it first.
+                $prefix = $this->getKeyPrefix();
+
+                if ($prefix !== '') {
+                    $keys = array_map(
+                        static fn (string $key): string => str_starts_with($key, $prefix) ? substr($key, strlen($prefix)) : $key,
+                        $keys,
+                    );
+                }
+
+                $this->predis->del($keys);
+            }
+        } catch (Throwable $e) {
+            log_message('error', 'Predis clear error: ' . $e->getMessage());
+
+            return false;
         }
 
-        if ($result) {
-            // Emit queue cleared event
-            QueueEventManager::queueCleared(
-                handler: $this->name(),
-                queue: $queue,
-            );
+        // Emit queue cleared event
+        QueueEventManager::queueCleared(
+            handler: $this->name(),
+            queue: $queue,
+        );
+
+        return true;
+    }
+
+    /**
+     * Get the key prefix configured for the Predis client.
+     */
+    private function getKeyPrefix(): string
+    {
+        $options = $this->predis->getOptions();
+
+        if (! $options->defined('prefix')) {
+            return '';
         }
 
-        return $result;
+        $prefix = $options->prefix;
+
+        if ($prefix instanceof KeyPrefixProcessor) {
+            return (string) $prefix->getPrefix();
+        }
+
+        return '';
     }
 }
