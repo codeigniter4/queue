@@ -160,23 +160,36 @@ class QueueJobModel extends Model
         $builder = $this->setPriority($builder, $priority);
         $sql     = $builder->getCompiledSelect();
 
-        $query = $this->db->query($this->skipLocked($sql));
-        if ($query === false) {
+        try {
+            $query = $this->db->query($this->skipLocked($sql));
+
+            if ($query === false) {
+                return null;
+            }
+
+            /** @var QueueJob|null $row */
+            $row = $query->getCustomRowObject(0, QueueJob::class);
+
+            if ($row === null) {
+                return null;
+            }
+
+            // Change status. The job must not be processed unless the
+            // reservation is confirmed by exactly one affected row.
+            $updated = $this->update($row->id, ['status' => Status::RESERVED->value]);
+
+            if ($updated === false || $this->db->affectedRows() !== 1) {
+                $this->db->transRollback();
+
+                return null;
+            }
+
+            return $row;
+        } finally {
+            // Always close the transaction, even when a query fails or the
+            // reservation cannot be confirmed.
             $this->db->transComplete();
-
-            return null;
         }
-        /** @var QueueJob|null $row */
-        $row = $query->getCustomRowObject(0, QueueJob::class);
-
-        if ($row !== null) {
-            // Change status
-            $this->update($row->id, ['status' => Status::RESERVED->value]);
-        }
-        // Complete transaction
-        $this->db->transComplete();
-
-        return $row;
     }
 
     /**
