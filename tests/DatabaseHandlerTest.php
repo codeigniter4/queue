@@ -13,14 +13,18 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use CodeIgniter\Events\Events;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Queue\Entities\QueueJob;
 use CodeIgniter\Queue\Enums\Status;
+use CodeIgniter\Queue\Events\QueueEventManager;
 use CodeIgniter\Queue\Exceptions\QueueException;
 use CodeIgniter\Queue\Handlers\DatabaseHandler;
 use CodeIgniter\Queue\Models\QueueJobFailedModel;
+use CodeIgniter\Queue\Models\QueueJobModel;
 use CodeIgniter\Test\ReflectionHelper;
 use Exception;
+use ReflectionClass;
 use ReflectionException;
 use Tests\Support\Config\Queue as QueueConfig;
 use Tests\Support\Database\Seeds\TestDatabaseQueueSeeder;
@@ -41,6 +45,13 @@ final class DatabaseHandlerTest extends TestCase
         parent::setUp();
 
         $this->config = config(QueueConfig::class);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        Events::removeAllListeners();
     }
 
     public function testDatabaseHandler(): void
@@ -91,6 +102,60 @@ final class DatabaseHandlerTest extends TestCase
             'payload'      => json_encode(['job' => 'success', 'data' => ['key' => 'value'], 'metadata' => []]),
             'available_at' => 1_703_859_316,
         ]);
+    }
+
+    public function testPushWhenModelReturnsFalse(): void
+    {
+        $pushedTriggered     = false;
+        $pushFailedTriggered = false;
+
+        Events::on(QueueEventManager::JOB_PUSHED, static function () use (&$pushedTriggered): void {
+            $pushedTriggered = true;
+        });
+        Events::on(QueueEventManager::JOB_PUSH_FAILED, static function () use (&$pushFailedTriggered): void {
+            $pushFailedTriggered = true;
+        });
+
+        $mockModel = $this->createMock(QueueJobModel::class);
+        $mockModel->expects($this->once())
+            ->method('insert')
+            ->willReturn(false);
+
+        $handler = $this->createHandlerWithMockModel($mockModel);
+        $result  = $handler->push('queue', 'success', ['key' => 'value']);
+
+        $this->assertFalse($result->getStatus());
+        $this->assertNull($result->getJobId());
+        $this->assertSame('Failed to insert job into the database.', $result->getError());
+        $this->assertFalse($pushedTriggered);
+        $this->assertTrue($pushFailedTriggered);
+    }
+
+    public function testPushWhenModelReturnsZero(): void
+    {
+        $pushedTriggered     = false;
+        $pushFailedTriggered = false;
+
+        Events::on(QueueEventManager::JOB_PUSHED, static function () use (&$pushedTriggered): void {
+            $pushedTriggered = true;
+        });
+        Events::on(QueueEventManager::JOB_PUSH_FAILED, static function () use (&$pushFailedTriggered): void {
+            $pushFailedTriggered = true;
+        });
+
+        $mockModel = $this->createMock(QueueJobModel::class);
+        $mockModel->expects($this->once())
+            ->method('insert')
+            ->willReturn(0);
+
+        $handler = $this->createHandlerWithMockModel($mockModel);
+        $result  = $handler->push('queue', 'success', ['key' => 'value']);
+
+        $this->assertFalse($result->getStatus());
+        $this->assertNull($result->getJobId());
+        $this->assertSame('Failed to insert job into the database.', $result->getError());
+        $this->assertFalse($pushedTriggered);
+        $this->assertTrue($pushFailedTriggered);
     }
 
     /**
@@ -512,5 +577,15 @@ final class DatabaseHandlerTest extends TestCase
         $handler = new DatabaseHandler($this->config);
         $list    = $handler->listFailed('queue1');
         $this->assertCount(1, $list);
+    }
+
+    private function createHandlerWithMockModel(QueueJobModel $mockModel): DatabaseHandler
+    {
+        $ref     = new ReflectionClass(DatabaseHandler::class);
+        $handler = $ref->newInstanceWithoutConstructor();
+        $this->setPrivateProperty($handler, 'config', $this->config);
+        $this->setPrivateProperty($handler, 'jobModel', $mockModel);
+
+        return $handler;
     }
 }
