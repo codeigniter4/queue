@@ -16,8 +16,11 @@ namespace Tests\Commands;
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\Config\Services;
 use CodeIgniter\I18n\Time;
+use CodeIgniter\Queue\Handlers\DatabaseHandler;
 use CodeIgniter\Queue\Models\QueueJobModel;
+use CodeIgniter\Queue\QueuePushResult;
 use CodeIgniter\Test\Filters\CITestStreamFilter;
+use RuntimeException;
 use Tests\Support\CLITestCase;
 
 /**
@@ -173,6 +176,92 @@ final class QueueWorkTest extends CLITestCase
                 ],
             ]),
         ]);
+    }
+
+    public function testRunWithChainedJobWhenDoneFailsDoesNotDispatchNextJob(): void
+    {
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        $this->fakeChainedJob();
+
+        $mockHandler = $this->getMockBuilder(DatabaseHandler::class)
+            ->setConstructorArgs([config('Queue')])
+            ->onlyMethods(['done', 'push'])
+            ->getMock();
+        $mockHandler->method('done')->willReturn(false);
+        $mockHandler->expects($this->never())->method('push');
+
+        Services::injectMock('queue', $mockHandler);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $output = $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertStringContainsString('The processing of this job was successful', $output);
+        $this->assertStringNotContainsString('Chained job:', $output);
+        $this->assertLogContains('error', 'failed to mark job');
+        $this->dontSeeInDatabase('queue_jobs', ['queue' => 'queue']);
+    }
+
+    public function testRunWithChainedJobWhenDispatchThrowsExceptionDoesNotFailOrRetryCurrentJob(): void
+    {
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        $this->fakeChainedJob();
+
+        $mockHandler = $this->getMockBuilder(DatabaseHandler::class)
+            ->setConstructorArgs([config('Queue')])
+            ->onlyMethods(['push', 'failed', 'later'])
+            ->getMock();
+        $mockHandler->method('push')->willThrowException(new RuntimeException('Push service unavailable'));
+        $mockHandler->expects($this->never())->method('failed');
+        $mockHandler->expects($this->never())->method('later');
+
+        Services::injectMock('queue', $mockHandler);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $output = $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertStringContainsString('The processing of this job was successful', $output);
+        $this->assertStringContainsString('The next job in the chain could not be queued.', $output);
+        $this->assertStringNotContainsString('The processing of this job failed', $output);
+        $this->assertLogContains('error', 'Queue: failed to process the next job in the chain: Push service unavailable');
+    }
+
+    public function testRunWithChainedJobWhenPushReturnsFailureShowsWarning(): void
+    {
+        Time::setTestNow('2023-12-19 14:15:16');
+
+        $this->fakeChainedJob();
+
+        $mockHandler = $this->getMockBuilder(DatabaseHandler::class)
+            ->setConstructorArgs([config('Queue')])
+            ->onlyMethods(['push'])
+            ->getMock();
+        $mockHandler->method('push')->willReturn(QueuePushResult::failure('Simulated push error message'));
+
+        Services::injectMock('queue', $mockHandler);
+
+        CITestStreamFilter::registration();
+        CITestStreamFilter::addOutputFilter();
+
+        $this->assertNotFalse(command('queue:work test sleep 1 --stop-when-empty'));
+        $output = $this->parseOutput(CITestStreamFilter::$buffer);
+
+        CITestStreamFilter::removeOutputFilter();
+
+        $this->assertStringContainsString('The processing of this job was successful', $output);
+        $this->assertStringContainsString('Chained job: success could not be placed in the queue: queue. Simulated push error message', $output);
+        $this->assertLogContains('error', 'Queue: failed to place chained job success in the queue queue: Simulated push error message');
     }
 
     public function testRunWithTaskLock(): void
@@ -333,5 +422,36 @@ final class QueueWorkTest extends CLITestCase
         $this->assertSame('Listening for the jobs with the queue: test', $this->getLine(0));
         $this->assertSame('Starting a new job: failure, with ID: 1', $this->getLine(3));
         $this->assertSame('The processing of this job failed', $this->getLine(4));
+    }
+
+    /**
+     * Seed a job in the "test" queue that chains one job into the "queue" queue.
+     */
+    private function fakeChainedJob(): void
+    {
+        fake(QueueJobModel::class, [
+            'connection' => 'database',
+            'queue'      => 'test',
+            'payload'    => [
+                'job'      => 'success',
+                'data'     => ['key' => 'value'],
+                'metadata' => [
+                    'queue'       => 'test',
+                    'chainedJobs' => [
+                        [
+                            'job'      => 'success',
+                            'data'     => ['key3' => 'value3'],
+                            'metadata' => [
+                                'queue' => 'queue',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'priority'     => 'default',
+            'status'       => 0,
+            'attempts'     => 0,
+            'available_at' => 1_702_977_074,
+        ]);
     }
 }

@@ -302,6 +302,7 @@ class QueueWork extends BaseCommand
         $payload   = $work->payload;
 
         $payloadMetadata = null;
+        $completed       = false;
 
         // Emit job processing started event
         QueueEventManager::jobProcessingStarted(
@@ -325,7 +326,16 @@ class QueueWork extends BaseCommand
             $job->process();
 
             // Mark as done
-            service('queue')->done($work);
+            if (! service('queue')->done($work)) {
+                log_message('error', sprintf(
+                    'Queue: failed to mark job %s from queue %s as done with the %s handler.',
+                    $work->id,
+                    $work->queue,
+                    service('queue')->name(),
+                ));
+            } else {
+                $completed = true;
+            }
 
             // Emit job processing completed event
             QueueEventManager::jobProcessingCompleted(
@@ -340,12 +350,31 @@ class QueueWork extends BaseCommand
 
             CLI::write('The processing of this job was successful', 'green');
 
-            // Check chained jobs
-            $this->processNextJobInChain($payloadMetadata);
+            if (! $completed) {
+                return;
+            }
+
+            // Chain failures must not turn an already completed job into a
+            // failure or trigger a retry of the current job.
+            try {
+                $this->processNextJobInChain($payloadMetadata);
+            } catch (Throwable $err) {
+                log_message('error', 'Queue: failed to process the next job in the chain: ' . $err->getMessage());
+                CLI::write('The next job in the chain could not be queued.', 'red');
+            }
         } catch (Throwable $err) {
             if (isset($job) && ++$work->attempts < ($tries ?? $job->getTries())) {
                 // Schedule for later
-                service('queue')->later($work, $retryAfter ?? $job->getRetryAfter());
+                $retryAfter ??= $job->getRetryAfter();
+
+                if (! service('queue')->later($work, $retryAfter)) {
+                    log_message('error', sprintf(
+                        'Queue: failed to reschedule job %s from queue %s with the %s handler.',
+                        $work->id,
+                        $work->queue,
+                        service('queue')->name(),
+                    ));
+                }
             } else {
                 // Mark as failed
                 QueueEventManager::jobFailed(
@@ -359,7 +388,14 @@ class QueueWork extends BaseCommand
                     ],
                 );
 
-                service('queue')->failed($work, $err, $config->keepFailedJobs);
+                if (! service('queue')->failed($work, $err, $config->keepFailedJobs)) {
+                    log_message('error', sprintf(
+                        'Queue: failed to mark job %s from queue %s as failed with the %s handler.',
+                        $work->id,
+                        $work->queue,
+                        service('queue')->name(),
+                    ));
+                }
             }
             CLI::write('The processing of this job failed', 'red');
         } finally {
@@ -396,12 +432,32 @@ class QueueWork extends BaseCommand
             $nextPayload->setChainedJobs($payloadMetadata->getChainedJobs());
         }
 
-        service('queue')->push(
+        $result = service('queue')->push(
             $nextPayload->getQueue(),
             $nextPayload->getJob(),
             $nextPayload->getData(),
             $nextPayload->getMetadata(),
         );
+
+        if (! $result->getStatus()) {
+            $error = $result->getError() ?? 'Unknown error.';
+
+            log_message('error', sprintf(
+                'Queue: failed to place chained job %s in the queue %s: %s',
+                $nextPayload->getJob(),
+                $nextPayload->getQueue(),
+                $error,
+            ));
+
+            CLI::write(sprintf(
+                'Chained job: %s could not be placed in the queue: %s. %s',
+                $nextPayload->getJob(),
+                $nextPayload->getQueue(),
+                $error,
+            ), 'red');
+
+            return;
+        }
 
         CLI::write(sprintf('Chained job: %s has been placed in the queue: %s', $nextPayload->getJob(), $nextPayload->getQueue()), 'green');
     }
